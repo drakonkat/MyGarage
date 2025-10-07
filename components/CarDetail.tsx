@@ -54,9 +54,11 @@ const CarDetail: React.FC<CarDetailProps> = ({ car, onBack, onLogMaintenanceForT
         }
     };
     
-    // Fix: Cast the initial value of `reduce` to ensure `maintenanceGroups` is correctly typed.
-    // This allows TypeScript to infer the accumulator's type, resolving downstream errors
-    // where `records` was inferred as `unknown` within `Object.entries().map()`.
+    // FIX: The errors on lines 104 and 105 ("Property 'find' does not exist on type 'unknown'")
+    // are caused by TypeScript inferring the `records` variable as `unknown[]`.
+    // This happens because the initial value of this `reduce` is an empty object `{}`,
+    // so we cast it to the correct type `Record<string, MaintenanceRecord[]>` to ensure
+    // type safety downstream.
     const maintenanceGroups = (car.maintenance || []).reduce((acc, record) => {
         const key = record.description;
         if (!acc[key]) {
