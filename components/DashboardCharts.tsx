@@ -1,5 +1,5 @@
 import React from 'react';
-import { Paper, Typography, Grid, useTheme } from '@mui/material';
+import { Paper, Typography, useTheme, Stack, Box } from '@mui/material';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
@@ -35,14 +35,13 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ cars }) => {
             <Typography variant="h5" gutterBottom>
                 Panoramica
             </Typography>
-            <Grid container spacing={4}>
-                {/* Fix: Replaced incorrect `size` prop with standard MUI Grid responsive props (`xs`, `md`). */}
-                <Grid item xs={12} md={6}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} sx={{ mt: 3 }}>
+                <Box sx={{ width: '100%', flex: 1, minWidth: 0 }}>
                     <Typography variant="h6" align="center" gutterBottom>
                         Costo Totale Manutenzione per Veicolo
                     </Typography>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={costData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                        <BarChart data={costData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                             <XAxis dataKey="name" stroke={tickColor} tick={{ fontSize: 12 }} />
                             <YAxis stroke={tickColor} tickFormatter={(value) => `€${value}`} />
@@ -56,9 +55,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ cars }) => {
                             <Bar dataKey="Costo Totale" fill={theme.palette.primary.main} />
                         </BarChart>
                     </ResponsiveContainer>
-                </Grid>
-                {/* Fix: Replaced incorrect `size` prop with standard MUI Grid responsive props (`xs`, `md`). */}
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box sx={{ width: '100%', flex: 1, minWidth: 0 }}>
                     <Typography variant="h6" align="center" gutterBottom>
                         Numero di Interventi per Veicolo
                     </Typography>
@@ -73,7 +71,10 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ cars }) => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                // FIX: Coerce `percent` to a number to prevent a TypeScript error.
+                                // The `recharts` library's types can be ambiguous, and this ensures
+                                // the value is treated as a number for the arithmetic operation.
+                                label={({ name, percent }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
                             >
                                 {filteredCountData.map((_entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -88,8 +89,8 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ cars }) => {
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
-                </Grid>
-            </Grid>
+                </Box>
+            </Stack>
         </Paper>
     );
 };

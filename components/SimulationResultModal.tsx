@@ -9,7 +9,6 @@ import {
     Divider,
     Paper,
     Chip,
-    Grid,
     Stack,
     Button,
 } from '@mui/material';
@@ -51,20 +50,16 @@ const SimulationResultModal: React.FC<SimulationResultModalProps> = ({ open, onC
                         Simulazione fino a: <strong>{targetMileage.toLocaleString()} km</strong>
                     </Typography>
 
-                    <Grid container spacing={2} sx={{ my: 2 }}>
-                        <Grid item xs={6}>
-                            <Paper elevation={3} sx={{ p: 2, bgcolor: 'secondary.main', color: 'secondary.contrastText', textAlign: 'center', height: '100%' }}>
-                                <Typography variant="subtitle2">Costo Totale Stimato (con manodopera)</Typography>
-                                <Typography variant="h5">€{totalCost.toFixed(2)}</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Paper elevation={3} sx={{ p: 2, bgcolor: 'primary.main', color: 'primary.contrastText', textAlign: 'center', height: '100%' }}>
-                                <Typography variant="subtitle2">Costo Stimato Fai-da-te (solo parti)</Typography>
-                                <Typography variant="h5">€{totalDiyCost.toFixed(2)}</Typography>
-                            </Paper>
-                        </Grid>
-                    </Grid>
+                    <Stack direction="row" spacing={2} sx={{ my: 2 }}>
+                        <Paper elevation={3} sx={{ p: 2, flex: 1, bgcolor: 'secondary.main', color: 'secondary.contrastText', textAlign: 'center' }}>
+                            <Typography variant="subtitle2">Costo Totale Stimato (con manodopera)</Typography>
+                            <Typography variant="h5">€{totalCost.toFixed(2)}</Typography>
+                        </Paper>
+                        <Paper elevation={3} sx={{ p: 2, flex: 1, bgcolor: 'primary.main', color: 'primary.contrastText', textAlign: 'center' }}>
+                            <Typography variant="subtitle2">Costo Stimato Fai-da-te (solo parti)</Typography>
+                            <Typography variant="h5">€{totalDiyCost.toFixed(2)}</Typography>
+                        </Paper>
+                    </Stack>
 
                     <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
                         Interventi Previsti

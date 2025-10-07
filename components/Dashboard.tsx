@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Grid, Card, CardContent, Typography, CardActions, Button, Box, Tabs, Tab, Paper } from '@mui/material';
+import { Card, CardContent, Typography, CardActions, Button, Box, Tabs, Tab, Paper } from '@mui/material';
 import { Car } from '../types.ts';
 import DashboardCharts from './DashboardCharts.tsx';
 
@@ -53,9 +53,9 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
             </Box>
 
             <TabPanel value={currentTab} index={0}>
-                <Grid container spacing={3}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1.5 }}>
                     {cars.map((car) => (
-                        <Grid item xs={12} sm={6} md={4} key={car.id}>
+                        <Box key={car.id} sx={{ p: 1.5, width: { xs: '100%', sm: '50%', md: '33.33%' } }}>
                             <Card>
                                 <CardContent>
                                     <Typography variant="h5" component="div">
@@ -76,9 +76,9 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
                                     </Button>
                                 </CardActions>
                             </Card>
-                        </Grid>
+                        </Box>
                     ))}
-                </Grid>
+                </Box>
             </TabPanel>
             
             <TabPanel value={currentTab} index={1}>

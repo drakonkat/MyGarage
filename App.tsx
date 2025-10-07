@@ -21,9 +21,11 @@ import AddMaintenanceModal from './components/AddMaintenanceModal.tsx';
 import AddIssueModal from './components/AddIssueModal.tsx';
 import SimulationSetupModal from './components/SimulationSetupModal.tsx';
 import SimulationResultModal from './components/SimulationResultModal.tsx';
+import LandingPage from './components/LandingPage.tsx';
 
 
 function App() {
+  const [appStarted, setAppStarted] = useState(false);
   const [cars, setCars] = useState<Car[]>([]);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
@@ -312,6 +314,15 @@ function App() {
     setModalOpen(false);
     setSimulationResult(null);
   };
+
+  if (!appStarted) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LandingPage onStart={() => setAppStarted(true)} />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
