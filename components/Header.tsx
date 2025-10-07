@@ -25,7 +25,9 @@ const Header: React.FC<HeaderProps> = ({
     themeMode, setThemeMode, primaryColor, setPrimaryColor
 }) => {
     const theme = useTheme();
-    // Fix: Using a callback function for `useMediaQuery` to ensure the `theme` object is correctly typed and `breakpoints` can be accessed without error.
+    // FIX: To fix "Property 'breakpoints' does not exist on type 'Theme'",
+    // we pass a callback function to `useMediaQuery`. This ensures MUI provides
+    // a correctly-typed `theme` object to the function.
     const isMobile = useMediaQuery((theme) => theme.breakpoints.down('md'));
     const [drawerOpen, setDrawerOpen] = useState(false);
     const colorInputRef = useRef<HTMLInputElement>(null);
