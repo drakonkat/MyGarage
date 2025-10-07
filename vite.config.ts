@@ -10,4 +10,12 @@ export default defineConfig({
   // È una soluzione robusta per il deploy su domini custom come mygarage.tnl.one
   // o in sottocartelle, poiché evita i comuni errori 404 che portano a una pagina bianca.
   base: './',
+  // Aggiunta per risolvere l'errore "Uncaught Error: An API Key must be set".
+  // Questa configurazione inietta la variabile d'ambiente GEMINI_API_KEY
+  // nel codice client durante il processo di build, assegnandola a process.env.API_KEY.
+  // Assicurati di impostare la variabile d'ambiente GEMINI_API_KEY quando esegui `npm run build`.
+  // Esempio: GEMINI_API_KEY="your_google_api_key" npm run build
+  define: {
+    'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
+  },
 })
