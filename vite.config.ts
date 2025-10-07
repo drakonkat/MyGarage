@@ -1,23 +1,13 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
-    return {
-      server: {
-        port: 3000,
-        host: '0.0.0.0',
-      },
-      plugins: [react()],
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-      },
-      resolve: {
-        alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      }
-    };
-});
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  // Imposta il percorso di base su relativo ('./').
+  // Questo fa sì che Vite generi percorsi relativi per gli asset (es. "assets/index.js")
+  // invece di percorsi assoluti dalla root (es. "/assets/index.js").
+  // È una soluzione robusta per il deploy su domini custom come mygarage.tnl.one
+  // o in sottocartelle, poiché evita i comuni errori 404 che portano a una pagina bianca.
+  base: './',
+})
