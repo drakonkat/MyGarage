@@ -95,11 +95,11 @@ const CarDetail: React.FC<CarDetailProps> = ({
 
 
     return (
-        <Box sx={{ mt: 3 }}>
+        <Box>
             <Button onClick={() => { onBack(); setResourceLinks(null); }}>
                 &larr; Torna alla Dashboard
             </Button>
-            <Typography variant="h4" gutterBottom sx={{ mt: 2 }}>
+            <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
                 {car.year} {car.make} {car.model}
             </Typography>
              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -108,7 +108,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
                     startIcon={<AddCircle />}
                     onClick={() => onLogMaintenanceForTask()}
                 >
-                    Aggiungi Intervento Manuale
+                    Aggiungi Intervento
                 </Button>
                 <Button
                     variant="outlined"
@@ -130,8 +130,8 @@ const CarDetail: React.FC<CarDetailProps> = ({
                 </Alert>
             )}
 
-            <Box sx={{ mt: 4 }}>
-                <Typography variant="h5" gutterBottom>
+            <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom>
                     Scadenze
                 </Typography>
                 <Button
@@ -142,14 +142,14 @@ const CarDetail: React.FC<CarDetailProps> = ({
                 >
                     Aggiungi Scadenza
                 </Button>
-                <List>
+                <List sx={{p:0}}>
                     {(car.reminders || []).length === 0 && <ListItem><ListItemText primary="Nessuna scadenza registrata." /></ListItem>}
                     {(car.reminders || [])
                         .sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime())
                         .map(reminder => {
                             const isOverdue = new Date(reminder.nextDueDate) < new Date();
                             return (
-                                <Card key={reminder.id} sx={{ mb: 2, bgcolor: 'background.paper' }}>
+                                <Card variant="outlined" key={reminder.id} sx={{ mb: 2 }}>
                                     <ListItem
                                         secondaryAction={
                                             <>
@@ -172,7 +172,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
                                         <Accordion
                                             expanded={expandedReminder === reminder.id}
                                             onChange={handleAccordionChange(reminder.id)}
-                                            sx={{ boxShadow: 'none', '&:before': { display: 'none' } }}
+                                            sx={{ boxShadow: 'none', '&:before': { display: 'none' }, backgroundImage: 'none', bgcolor: 'transparent' }}
                                         >
                                             <AccordionSummary expandIcon={<ExpandMore />} sx={{ minHeight: '32px', '.MuiAccordionSummary-content': { margin: '8px 0' } }}>
                                                 <Typography variant="body2" color="text.secondary">Cronologia Pagamenti</Typography>
@@ -196,8 +196,8 @@ const CarDetail: React.FC<CarDetailProps> = ({
                 </List>
             </Box>
 
-             <Box sx={{ mt: 4 }}>
-                <Typography variant="h5" gutterBottom>
+             <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom>
                     Problemi Conosciuti
                 </Typography>
                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: '70ch' }}>
@@ -241,12 +241,12 @@ const CarDetail: React.FC<CarDetailProps> = ({
                 </List>
             </Box>
 
-            <Box sx={{ mt: 4 }}>
-                <Typography variant="h5" gutterBottom>
+            <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" gutterBottom>
                     Piano di Manutenzione e Cronologia
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: '70ch' }}>
-                    Questa è una lista di interventi di manutenzione suggeriti dall'IA o aggiunti da te. Puoi registrare quando li completi o rimuovere i suggerimenti se non sono pertinenti.
+                    Questa è una lista di interventi suggeriti dall'IA o aggiunti da te. Puoi registrare quando li completi o rimuovere i suggerimenti se non pertinenti.
                 </Typography>
                 
                 {Object.entries(maintenanceGroups).map(([description, records]) => {
@@ -256,7 +256,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
                     const history = records.filter(r => !r.isRecommendation).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                     return (
-                        <Card key={description} sx={{ mb: 2, bgcolor: 'background.paper' }}>
+                        <Card variant="outlined" key={description} sx={{ mb: 2 }}>
                             <CardContent>
                                 <Typography variant="h6">{description}</Typography>
                                 {recommendation && (
@@ -298,7 +298,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
                                 )}
                             </CardContent>
                             <CardActions>
-                                <Button size="small" onClick={() => onLogMaintenanceForTask(description)}>Registra Intervento Completato</Button>
+                                <Button size="small" onClick={() => onLogMaintenanceForTask(description)}>Registra Intervento</Button>
                                 {loading && activeRecordId === records[0].id ? 
                                     <CircularProgress size={24} sx={{ml: 1}}/> :
                                     <Button size="small" onClick={() => fetchAndSetResources({ ...records[0], description })}>Trova Risorse</Button>

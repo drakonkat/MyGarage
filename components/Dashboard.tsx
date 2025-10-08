@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Typography, CardActions, Button, Box, Tabs, Tab, Paper, List, ListItem, ListItemIcon, Avatar, ListItemText } from '@mui/material';
-import { EventNote } from '@mui/icons-material';
+import { EventNote, Build } from '@mui/icons-material';
 import { Car } from '../types.ts';
 import DashboardCharts from './DashboardCharts.tsx';
 
@@ -66,25 +66,28 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -1.5 }}>
                     {cars.map((car) => (
                         <Box key={car.id} sx={{ p: 1.5, width: { xs: '100%', sm: '50%', md: '33.33%' } }}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h5" component="div">
+                            <Card variant="outlined" sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                                <CardContent sx={{ flexGrow: 1 }}>
+                                    <Typography variant="h6" component="div" fontWeight="bold">
                                         {car.year} {car.make} {car.model}
                                     </Typography>
-                                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                                        {car.maintenance.filter(r => !r.isRecommendation).length} interventi registrati
-                                    </Typography>
+                                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, color: 'text.secondary' }}>
+                                        <Build sx={{ fontSize: 16, mr: 0.5 }} />
+                                        <Typography variant="body2">
+                                            {car.maintenance.filter(r => !r.isRecommendation).length} interventi registrati
+                                        </Typography>
+                                    </Box>
                                     {car.knownIssues && car.knownIssues.filter(i => !i.isResolved).length > 0 && (
-                                        <Typography sx={{ mb: 1.5 }} color="error.light">
+                                        <Typography sx={{ mt: 1 }} color="error.light" variant="body2">
                                             {car.knownIssues.filter(i => !i.isResolved).length} problemi aperti
                                         </Typography>
                                     )}
                                 </CardContent>
                                 <CardActions>
-                                    <Button size="small" onClick={() => onCarSelect(car)}>
+                                    <Button size="small" variant="text" onClick={() => onCarSelect(car)}>
                                         Visualizza Dettagli
                                     </Button>
-                                    <Button size="small" color="error" onClick={() => onDeleteCar(car.id)}>
+                                    <Button size="small" variant="outlined" color="error" onClick={() => onDeleteCar(car.id)}>
                                         Elimina
                                     </Button>
                                 </CardActions>
@@ -98,7 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
                  {hasMaintenanceData ? (
                     <DashboardCharts cars={cars} />
                 ) : (
-                    <Paper elevation={3} sx={{ p: 4, textAlign: 'center', backgroundColor: 'background.paper' }}>
+                    <Paper elevation={0} variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
                         <Typography variant="h6" gutterBottom>
                             La Panoramica è vuota
                         </Typography>
@@ -109,7 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
                 )}
 
                  {upcomingReminders.length > 0 && (
-                    <Paper elevation={3} sx={{ p: {xs: 2, md: 3}, mt: 4 }}>
+                    <Paper elevation={0} variant="outlined" sx={{ p: {xs: 2, md: 3}, mt: 4 }}>
                         <Typography variant="h5" gutterBottom>
                             Prossime Scadenze
                         </Typography>

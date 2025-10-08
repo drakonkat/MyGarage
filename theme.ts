@@ -29,6 +29,51 @@ export const getTheme = (mode: 'light' | 'dark', primaryColor?: string) => creat
           },
         }),
   },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          ...(ownerState.variant === 'outlined' && {
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: 'none',
+          }),
+          borderRadius: '12px', // Bordi più arrotondati
+        }),
+      },
+    },
+    MuiTypography: {
+        styleOverrides: {
+            h4: { fontSize: '1.75rem' },
+            h5: { fontSize: '1.25rem' },
+            h6: { fontSize: '1.1rem' },
+        }
+    },
+    MuiButton: {
+        styleOverrides: {
+            root: {
+                textTransform: 'none',
+                borderRadius: '8px',
+            }
+        }
+    },
+    MuiCardContent: {
+        styleOverrides: {
+            root: {
+                padding: '16px',
+                '&:last-child': {
+                    paddingBottom: '16px',
+                },
+            },
+        },
+    },
+    MuiCardActions: {
+        styleOverrides: {
+            root: {
+                padding: '8px 16px',
+            },
+        },
+    },
+  }
 });
 
 

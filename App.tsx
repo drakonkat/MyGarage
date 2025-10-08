@@ -36,6 +36,7 @@ function App() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [simulationResult, setSimulationResult] = useState<SimulationResultData | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('themeMode') as 'light' | 'dark') || 'dark';
@@ -435,6 +436,13 @@ function App() {
     setSimulationResult(null);
   };
 
+  const filteredCars = useMemo(() => {
+    if (!searchQuery) return cars;
+    return cars.filter(car => 
+      `${car.year} ${car.make} ${car.model}`.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [cars, searchQuery]);
+
   if (!appStarted) {
     return (
       <ThemeProvider theme={theme}>
@@ -456,6 +464,8 @@ function App() {
         setThemeMode={setThemeMode}
         primaryColor={primaryColor}
         setPrimaryColor={setPrimaryColor}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
       <input
         type="file"
@@ -487,7 +497,7 @@ function App() {
                 />
             ) : (
                 <Dashboard 
-                    cars={cars} 
+                    cars={filteredCars} 
                     onCarSelect={handleCarSelect} 
                     onDeleteCar={handleDeleteCar}
                 />

@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react';
 import {
     AppBar, Toolbar, Typography, Button, IconButton,
     Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Box, Divider,
-    useMediaQuery, useTheme
+    useMediaQuery, useTheme, TextField, InputAdornment, Tooltip
 } from '@mui/material';
 import {
     AddCircle, UploadFile, Download, CarCrash, Analytics,
-    Menu as MenuIcon, Brightness4, Brightness7, ColorLens
+    Menu as MenuIcon, Brightness4, Brightness7, ColorLens, Search
 } from '@mui/icons-material';
 
 interface HeaderProps {
@@ -18,17 +18,16 @@ interface HeaderProps {
     setThemeMode: React.Dispatch<React.SetStateAction<'light' | 'dark'>>;
     primaryColor: string;
     setPrimaryColor: React.Dispatch<React.SetStateAction<string>>;
+    searchQuery: string;
+    setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const Header: React.FC<HeaderProps> = ({
     onImportClick, onExport, onAddCarClick, onSimulateClick,
-    themeMode, setThemeMode, primaryColor, setPrimaryColor
+    themeMode, setThemeMode, primaryColor, setPrimaryColor,
+    searchQuery, setSearchQuery
 }) => {
     const theme = useTheme();
-    // FIX: To fix "Property 'breakpoints' does not exist on type 'Theme'",
-    // we pass a callback function to `useMediaQuery`. This ensures MUI provides
-    // a correctly-typed `theme` object to the function.
-    // Fix: Pass a callback to `useMediaQuery` to ensure the theme object is correctly typed.
     const isMobile = useMediaQuery((theme) => theme.breakpoints.down('md'));
     const [drawerOpen, setDrawerOpen] = useState(false);
     const colorInputRef = useRef<HTMLInputElement>(null);
@@ -104,27 +103,88 @@ const Header: React.FC<HeaderProps> = ({
     const desktopHeader = (
         <Toolbar>
             <CarCrash sx={{ mr: 2 }} />
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Gestione Manutenzione Auto
+            <Typography variant="h6" component="div" noWrap>
+                CarMaintenance
             </Typography>
-            <Button color="inherit" startIcon={<Analytics />} onClick={onSimulateClick}>Simulazione</Button>
-            <Button color="inherit" startIcon={<UploadFile />} onClick={onImportClick}>Importa</Button>
-            <Button color="inherit" startIcon={<Download />} onClick={onExport}>Esporta</Button>
-            <Button color="inherit" startIcon={<AddCircle />} onClick={onAddCarClick}>Aggiungi</Button>
-            <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
-            <IconButton sx={{ ml: 1 }} onClick={() => setThemeMode(prev => prev === 'light' ? 'dark' : 'light')} color="inherit">
-                {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-            <IconButton onClick={handleColorButtonClick} color="inherit" title="Cambia colore primario">
-                <ColorLens />
-            </IconButton>
-            <input
-                type="color"
-                ref={colorInputRef}
-                value={primaryColor}
-                onChange={handleColorChange}
-                style={{ display: 'none' }}
-            />
+
+            <Box sx={{ flexGrow: 1 }} />
+
+             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
+                <TextField
+                    variant="outlined"
+                    size="small"
+                    placeholder="Cerca auto…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <Search />
+                            </InputAdornment>
+                        ),
+                        sx: {
+                            borderRadius: '20px',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                border: 'none',
+                            },
+                        },
+                    }}
+                    sx={{ mr: 2 }}
+                />
+
+                <Tooltip title="Aggiungi Auto">
+                    <IconButton color="inherit" onClick={onAddCarClick}>
+                        <AddCircle />
+                    </IconButton>
+                </Tooltip>
+                 <Tooltip title="Importa Dati">
+                    <IconButton color="inherit" onClick={onImportClick}>
+                        <UploadFile />
+                    </IconButton>
+                </Tooltip>
+                 <Tooltip title="Esporta Dati">
+                    <IconButton color="inherit" onClick={onExport}>
+                        <Download />
+                    </IconButton>
+                </Tooltip>
+                 <Tooltip title="Simulazione Costi">
+                    <IconButton color="inherit" onClick={onSimulateClick}>
+                        <Analytics />
+                    </IconButton>
+                </Tooltip>
+                
+                <Divider orientation="vertical" flexItem sx={{ mx: 1, my: 1.5, borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+                
+                <Tooltip title="Cambia Tema">
+                    <IconButton onClick={() => setThemeMode(prev => prev === 'light' ? 'dark' : 'light')} color="inherit">
+                        {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                    </IconButton>
+                </Tooltip>
+                 <Tooltip title="Cambia Colore Primario">
+                    <IconButton onClick={handleColorButtonClick} color="inherit">
+                        <ColorLens />
+                    </IconButton>
+                 </Tooltip>
+                <input
+                    type="color"
+                    ref={colorInputRef}
+                    value={primaryColor}
+                    onChange={handleColorChange}
+                    style={{ display: 'none' }}
+                />
+            </Box>
+
+             <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+                <IconButton
+                    color="inherit"
+                    aria-label="open drawer"
+                    edge="end"
+                    onClick={handleDrawerToggle}
+                >
+                    <MenuIcon />
+                </IconButton>
+            </Box>
         </Toolbar>
     );
 
@@ -132,7 +192,7 @@ const Header: React.FC<HeaderProps> = ({
          <Toolbar>
             <CarCrash sx={{ mr: 2 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Gestione Auto
+                CarMaintenance
             </Typography>
             <IconButton
                 color="inherit"
@@ -147,7 +207,7 @@ const Header: React.FC<HeaderProps> = ({
 
     return (
         <>
-            <AppBar position="static">
+            <AppBar position="static" elevation={0} sx={{borderBottom: 1, borderColor: 'divider'}}>
                 {isMobile ? mobileHeader : desktopHeader}
             </AppBar>
             <Drawer
