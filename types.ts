@@ -22,12 +22,13 @@ export interface PaymentRecord {
   amount: number;
 }
 
-export interface AnnualReminder {
+export interface Reminder {
   id: string;
   description: string;
   nextDueDate: string;
   amount: number;
   paymentHistory: PaymentRecord[];
+  frequency: 'monthly' | 'annual' | 'biennial';
 }
 
 export interface Car {
@@ -37,7 +38,7 @@ export interface Car {
   year: number;
   maintenance: MaintenanceRecord[];
   knownIssues?: KnownIssue[];
-  annualReminders?: AnnualReminder[];
+  reminders?: Reminder[];
 }
 
 export interface ResourceLinks {

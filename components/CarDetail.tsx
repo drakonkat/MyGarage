@@ -19,8 +19,8 @@ import {
     IconButton,
     ListItemIcon,
 } from '@mui/material';
-import { AddCircle, YouTube, ShoppingCart, ExpandMore, Delete, AttachMoney } from '@mui/icons-material';
-import { Car, MaintenanceRecord, ResourceLinks, AnnualReminder } from '../types.ts';
+import { AddCircle, YouTube, ShoppingCart, ExpandMore, Delete, AttachMoney, DeleteForever } from '@mui/icons-material';
+import { Car, MaintenanceRecord, ResourceLinks, Reminder } from '../types.ts';
 import { geminiApi } from '../api.ts';
 
 interface CarDetailProps {
@@ -34,13 +34,14 @@ interface CarDetailProps {
     onPayReminder: (reminderId: string, amount: number) => void;
     onDeleteReminder: (reminderId: string) => void;
     onDeleteRecommendation: (recordId: string) => void;
+    onDeleteCar: (carId: string) => void;
 }
 
 const CarDetail: React.FC<CarDetailProps> = ({ 
     car, onBack, onLogMaintenanceForTask, 
     onAddIssueClick, onToggleIssue, onDeleteIssue,
     onAddReminderClick, onPayReminder, onDeleteReminder,
-    onDeleteRecommendation
+    onDeleteRecommendation, onDeleteCar
 }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -50,6 +51,16 @@ const CarDetail: React.FC<CarDetailProps> = ({
 
     const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
         setExpandedReminder(isExpanded ? panel : false);
+    };
+    
+    const translateFrequency = (freq?: string) => {
+        switch (freq) {
+            case 'monthly': return 'Mensile';
+            case 'biennial': return 'Biennale';
+            case 'annual':
+            default:
+                return 'Annuale';
+        }
     };
 
     const fetchAndSetResources = async (record: MaintenanceRecord) => {
@@ -91,14 +102,23 @@ const CarDetail: React.FC<CarDetailProps> = ({
             <Typography variant="h4" gutterBottom sx={{ mt: 2 }}>
                 {car.year} {car.make} {car.model}
             </Typography>
-            <Button
-                variant="contained"
-                startIcon={<AddCircle />}
-                onClick={() => onLogMaintenanceForTask()}
-                sx={{ mb: 2 }}
-            >
-                Aggiungi Intervento Manuale
-            </Button>
+             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                <Button
+                    variant="contained"
+                    startIcon={<AddCircle />}
+                    onClick={() => onLogMaintenanceForTask()}
+                >
+                    Aggiungi Intervento Manuale
+                </Button>
+                <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteForever />}
+                    onClick={() => onDeleteCar(car.id)}
+                >
+                    Elimina Auto
+                </Button>
+            </Box>
 
             {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
             
@@ -112,7 +132,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
 
             <Box sx={{ mt: 4 }}>
                 <Typography variant="h5" gutterBottom>
-                    Scadenze Annuali
+                    Scadenze
                 </Typography>
                 <Button
                     variant="outlined"
@@ -123,8 +143,8 @@ const CarDetail: React.FC<CarDetailProps> = ({
                     Aggiungi Scadenza
                 </Button>
                 <List>
-                    {(car.annualReminders || []).length === 0 && <ListItem><ListItemText primary="Nessuna scadenza annuale registrata." /></ListItem>}
-                    {(car.annualReminders || [])
+                    {(car.reminders || []).length === 0 && <ListItem><ListItemText primary="Nessuna scadenza registrata." /></ListItem>}
+                    {(car.reminders || [])
                         .sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime())
                         .map(reminder => {
                             const isOverdue = new Date(reminder.nextDueDate) < new Date();
@@ -133,7 +153,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
                                     <ListItem
                                         secondaryAction={
                                             <>
-                                                <IconButton edge="end" aria-label="pay" onClick={() => onPayReminder(reminder.id, reminder.amount)} title="Segna come pagato e sposta al prossimo anno">
+                                                <IconButton edge="end" aria-label="pay" onClick={() => onPayReminder(reminder.id, reminder.amount)} title="Segna come pagato e sposta alla prossima scadenza">
                                                     <AttachMoney color="success" />
                                                 </IconButton>
                                                 <IconButton edge="end" aria-label="delete" onClick={() => onDeleteReminder(reminder.id)}>
@@ -144,7 +164,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
                                     >
                                         <ListItemText 
                                             primary={reminder.description} 
-                                            secondary={`Prossima scadenza: ${new Date(reminder.nextDueDate).toLocaleDateString()} - Importo: €${reminder.amount.toFixed(2)}`}
+                                            secondary={`Scadenza: ${new Date(reminder.nextDueDate).toLocaleDateString()} - €${reminder.amount.toFixed(2)} - Frequenza: ${translateFrequency(reminder.frequency)}`}
                                             sx={{ color: isOverdue ? 'error.main' : 'text.primary' }}
                                         />
                                     </ListItem>

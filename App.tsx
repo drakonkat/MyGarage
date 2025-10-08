@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 
 import { getTheme } from './theme.ts';
-import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, AnnualReminder } from './types.ts';
+import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from './types.ts';
 import { geminiApi } from './api.ts';
 import { getCarsFromDB, saveCarsToDB } from './db.ts';
 
@@ -188,7 +188,7 @@ function App() {
       year,
       maintenance: [initialRecord],
       knownIssues: [],
-      annualReminders: [],
+      reminders: [],
     };
 
     setCars(prevCars => [...prevCars, newCar]);
@@ -197,6 +197,18 @@ function App() {
     fetchAndApplyRecommendations(newCarId, carData.make, carData.model, year, mileage);
   };
   
+  const handleDeleteCar = (carId: string) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questa auto e tutta la sua cronologia? L'azione è irreversibile.")) {
+        return;
+    }
+    
+    setCars(prevCars => prevCars.filter(car => car.id !== carId));
+
+    if (selectedCar && selectedCar.id === carId) {
+        setSelectedCar(null);
+    }
+  };
+
   const handleAddMaintenance = (newRecord: Omit<MaintenanceRecord, 'id'>) => {
       if (!selectedCar) return;
 
@@ -292,10 +304,10 @@ function App() {
   }
 
   // --- REMINDER HANDLERS ---
-  const handleAddReminder = (newReminderData: Omit<AnnualReminder, 'id' | 'paymentHistory'>) => {
+  const handleAddReminder = (newReminderData: Omit<Reminder, 'id' | 'paymentHistory'>) => {
       if (!selectedCar) return;
 
-      const reminderWithId: AnnualReminder = { 
+      const reminderWithId: Reminder = { 
           ...newReminderData, 
           id: crypto.randomUUID(),
           paymentHistory: [] 
@@ -303,7 +315,7 @@ function App() {
 
       const updatedCars = cars.map(car =>
           car.id === selectedCar.id
-              ? { ...car, annualReminders: [...(car.annualReminders || []), reminderWithId] }
+              ? { ...car, reminders: [...(car.reminders || []), reminderWithId] }
               : car
       );
       setCars(updatedCars);
@@ -316,10 +328,23 @@ function App() {
 
       const updatedCars = cars.map(car => {
           if (car.id === selectedCar.id) {
-              const updatedReminders = (car.annualReminders || []).map(reminder => {
+              const updatedReminders = (car.reminders || []).map(reminder => {
                   if (reminder.id === reminderId) {
                       const nextDueDate = new Date(reminder.nextDueDate);
-                      nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+                      const frequency = reminder.frequency || 'annual'; // Default for old data
+
+                      switch (frequency) {
+                          case 'monthly':
+                              nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+                              break;
+                          case 'biennial':
+                              nextDueDate.setFullYear(nextDueDate.getFullYear() + 2);
+                              break;
+                          case 'annual':
+                          default:
+                              nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+                              break;
+                      }
 
                       return { 
                           ...reminder,
@@ -332,7 +357,7 @@ function App() {
                   }
                   return reminder;
               });
-              return { ...car, annualReminders: updatedReminders };
+              return { ...car, reminders: updatedReminders };
           }
           return car;
       });
@@ -347,8 +372,8 @@ function App() {
 
       const updatedCars = cars.map(car => {
           if (car.id === selectedCar.id) {
-              const updatedReminders = (car.annualReminders || []).filter(r => r.id !== reminderId);
-              return { ...car, annualReminders: updatedReminders };
+              const updatedReminders = (car.reminders || []).filter(r => r.id !== reminderId);
+              return { ...car, reminders: updatedReminders };
           }
           return car;
       });
@@ -402,7 +427,7 @@ function App() {
         ...carToAdd,
         maintenance: [initialRecord, ...recommendedRecords].sort((a,b) => b.mileage - a.mileage),
         knownIssues: [],
-        annualReminders: [],
+        reminders: [],
     };
 
     setCars(prevCars => [...prevCars, finalCar]);
@@ -458,11 +483,13 @@ function App() {
                     onPayReminder={handlePayReminder}
                     onDeleteReminder={handleDeleteReminder}
                     onDeleteRecommendation={handleDeleteMaintenanceRecord}
+                    onDeleteCar={handleDeleteCar}
                 />
             ) : (
                 <Dashboard 
                     cars={cars} 
                     onCarSelect={handleCarSelect} 
+                    onDeleteCar={handleDeleteCar}
                 />
             )
         )}

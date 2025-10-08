@@ -7,6 +7,7 @@ import DashboardCharts from './DashboardCharts.tsx';
 interface DashboardProps {
     cars: Car[];
     onCarSelect: (car: Car) => void;
+    onDeleteCar: (carId: string) => void;
 }
 
 interface TabPanelProps {
@@ -36,7 +37,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 
-const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
+const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar }) => {
     const [currentTab, setCurrentTab] = useState(0);
     const hasMaintenanceData = cars.some(car => car.maintenance.some(m => !m.isRecommendation && m.cost > 0));
 
@@ -45,7 +46,7 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
     };
     
     const upcomingReminders = cars
-        .flatMap(car => (car.annualReminders || []).map(reminder => ({
+        .flatMap(car => (car.reminders || []).map(reminder => ({
             ...reminder,
             carId: car.id,
             carName: `${car.year} ${car.make} ${car.model}`
@@ -82,6 +83,9 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
                                 <CardActions>
                                     <Button size="small" onClick={() => onCarSelect(car)}>
                                         Visualizza Dettagli
+                                    </Button>
+                                    <Button size="small" color="error" onClick={() => onDeleteCar(car.id)}>
+                                        Elimina
                                     </Button>
                                 </CardActions>
                             </Card>

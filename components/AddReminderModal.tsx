@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
-import { Modal, Box, Typography, TextField, Button, Stack } from '@mui/material';
+import { 
+    Modal, 
+    Box, 
+    Typography, 
+    TextField, 
+    Button, 
+    Stack, 
+    Select, 
+    MenuItem, 
+    FormControl, 
+    InputLabel 
+} from '@mui/material';
 import { modalStyle } from '../theme.ts';
-import { AnnualReminder } from '../types.ts';
+import { Reminder } from '../types.ts';
 
 interface AddReminderModalProps {
     open: boolean;
     onClose: () => void;
-    onAddReminder: (reminder: Omit<AnnualReminder, 'id' | 'paymentHistory'>) => void;
+    onAddReminder: (reminder: Omit<Reminder, 'id' | 'paymentHistory'>) => void;
 }
 
 const AddReminderModal: React.FC<AddReminderModalProps> = ({ open, onClose, onAddReminder }) => {
     const [description, setDescription] = useState('');
     const [nextDueDate, setNextDueDate] = useState('');
     const [amount, setAmount] = useState('');
+    const [frequency, setFrequency] = useState<'monthly' | 'annual' | 'biennial'>('annual');
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -20,7 +32,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ open, onClose, onAd
         onAddReminder({ 
             description,
             nextDueDate,
-            amount: parseFloat(amount)
+            amount: parseFloat(amount),
+            frequency,
         });
         handleClose();
     };
@@ -29,13 +42,14 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ open, onClose, onAd
         setDescription('');
         setNextDueDate('');
         setAmount('');
+        setFrequency('annual');
         onClose();
     }
 
     return (
         <Modal open={open} onClose={handleClose}>
             <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
-                <Typography variant="h6" component="h2">Aggiungi Scadenza Annuale</Typography>
+                <Typography variant="h6" component="h2">Aggiungi Scadenza</Typography>
                 <Stack spacing={2} sx={{ mt: 2 }}>
                     <TextField 
                         name="description" 
@@ -46,6 +60,19 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ open, onClose, onAd
                         onChange={(e) => setDescription(e.target.value)}
                         autoFocus
                     />
+                    <FormControl fullWidth>
+                        <InputLabel id="frequency-select-label">Frequenza</InputLabel>
+                        <Select
+                            labelId="frequency-select-label"
+                            value={frequency}
+                            label="Frequenza"
+                            onChange={(e) => setFrequency(e.target.value as 'monthly' | 'annual' | 'biennial')}
+                        >
+                            <MenuItem value="monthly">Mensile</MenuItem>
+                            <MenuItem value="annual">Annuale</MenuItem>
+                            <MenuItem value="biennial">Biennale</MenuItem>
+                        </Select>
+                    </FormControl>
                     <TextField 
                         name="nextDueDate" 
                         label="Prossima Scadenza" 
