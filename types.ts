@@ -17,6 +17,19 @@ export interface KnownIssue {
   isResolved: boolean;
 }
 
+export interface PaymentRecord {
+  date: string;
+  amount: number;
+}
+
+export interface AnnualReminder {
+  id: string;
+  description: string;
+  nextDueDate: string;
+  amount: number;
+  paymentHistory: PaymentRecord[];
+}
+
 export interface Car {
   id: string;
   make: string;
@@ -24,6 +37,7 @@ export interface Car {
   year: number;
   maintenance: MaintenanceRecord[];
   knownIssues?: KnownIssue[];
+  annualReminders?: AnnualReminder[];
 }
 
 export interface ResourceLinks {

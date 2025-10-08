@@ -13,6 +13,7 @@ import {
     ListItemIcon,
     ListItemText,
     Paper,
+    Grid,
 } from '@mui/material';
 import {
     ArrowForward,
@@ -22,7 +23,13 @@ import {
     Build,
     NotificationsActive,
     CloudUpload,
-    Storefront
+    Storefront,
+    People,
+    Web,
+    EventAvailable,
+    MarkEmailRead,
+    RequestQuote,
+    Analytics,
 } from '@mui/icons-material';
 
 interface LandingPageProps {
@@ -181,6 +188,70 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     </Box>
                 </Box>
             </Container>
+            
+            {/* Workshop Features Details Section */}
+            <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.paper' }}>
+                <Container maxWidth="lg">
+                    <Typography variant="h4" component="h2" fontWeight="bold" textAlign="center" gutterBottom>
+                        Una Soluzione Completa per la Tua Officina
+                    </Typography>
+                    <Typography variant="h6" color="text.secondary" textAlign="center" sx={{ mb: 6, maxWidth: '800px', mx: 'auto' }}>
+                        Semplifica la gestione, fidelizza i clienti e aumenta la tua efficienza con strumenti pensati per il meccanico moderno.
+                    </Typography>
+
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                            <List>
+                                <ListItem disableGutters>
+                                    <ListItemIcon><People sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
+                                    <ListItemText primary="Gestionale Clienti Semplificato" secondary="Tieni traccia di veicoli, cronologia interventi e contatti dei tuoi clienti in un unico posto, accessibile e facile da usare." />
+                                </ListItem>
+                                <ListItem disableGutters>
+                                    <ListItemIcon><Web sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
+                                    <ListItemText primary="Portale Cliente Dedicato" secondary="Offri ai tuoi clienti un'app con il logo della tua officina, dove possono visualizzare lo storico della manutenzione e i prossimi interventi." />
+                                </ListItem>
+                                <ListItem disableGutters>
+                                    <ListItemIcon><EventAvailable sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
+                                    <ListItemText primary="Prenotazioni Online" secondary="Permetti ai clienti di prenotare appuntamenti direttamente dal loro portale, riducendo le telefonate e ottimizzando il tuo calendario." />
+                                </ListItem>
+                            </List>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <List>
+                                <ListItem disableGutters>
+                                    <ListItemIcon><MarkEmailRead sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
+                                    <ListItemText primary="Promemoria Automatici" secondary="Invia notifiche automatiche per i prossimi tagliandi o scadenze, aumentando la fidelizzazione e il ritorno dei clienti." />
+                                </ListItem>
+                                <ListItem disableGutters>
+                                    <ListItemIcon><RequestQuote sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
+                                    <ListItemText primary="Preventivi e Fatture Digitali" secondary="Crea e invia preventivi chiari e fatture professionali in pochi click. I clienti possono approvare i lavori direttamente online." />
+                                </ListItem>
+                                 <ListItem disableGutters>
+                                    <ListItemIcon><Analytics sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
+                                    <ListItemText primary="Report e Statistiche" secondary="Analizza le performance della tua officina, visualizza i servizi più richiesti e monitora i ricavi con report intuitivi." />
+                                </ListItem>
+                            </List>
+                        </Grid>
+                    </Grid>
+
+                    <Box sx={{ mt: 6, textAlign: 'center' }}>
+                        <Typography sx={{ mb: 2, fontStyle: 'italic' }}>
+                            Partecipa all'anteprima e ottieni <strong>1 anno di accesso completo gratuito</strong> per rivoluzionare la tua officina.
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            size="large"
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSedr0NppzuFj35NPIhbO3n-QhkQa6ii3jR4HzzoBKXHp2b32Q/viewform?usp=dialog"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Prenota il tuo anno gratuito
+                        </Button>
+                    </Box>
+                </Container>
+            </Box>
+
 
             {/* Footer */}
             <Box component="footer" sx={{ bgcolor: 'background.paper', py: 4, mt: 4 }}>

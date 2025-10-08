@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 
 import { getTheme } from './theme.ts';
-import { Car, MaintenanceRecord, KnownIssue, SimulationResultData } from './types.ts';
+import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, AnnualReminder } from './types.ts';
 import { geminiApi } from './api.ts';
 import { getCarsFromDB, saveCarsToDB } from './db.ts';
 
@@ -19,6 +19,7 @@ import CarDetail from './components/CarDetail.tsx';
 import AddCarModal from './components/AddCarModal.tsx';
 import AddMaintenanceModal from './components/AddMaintenanceModal.tsx';
 import AddIssueModal from './components/AddIssueModal.tsx';
+import AddReminderModal from './components/AddReminderModal.tsx';
 import SimulationSetupModal from './components/SimulationSetupModal.tsx';
 import SimulationResultModal from './components/SimulationResultModal.tsx';
 import LandingPage from './components/LandingPage.tsx';
@@ -30,7 +31,7 @@ function App() {
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState<false | 'addCar' | 'addMaintenance' | 'addIssue' | 'simulationSetup' | 'simulationResult'>(false);
+  const [modalOpen, setModalOpen] = useState<false | 'addCar' | 'addMaintenance' | 'addIssue' | 'simulationSetup' | 'simulationResult' | 'addReminder'>(false);
   const [maintenanceModalData, setMaintenanceModalData] = useState<{ defaultDescription?: string }>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [simulationResult, setSimulationResult] = useState<SimulationResultData | null>(null);
@@ -140,14 +141,35 @@ function App() {
     event.target.value = ''; // Reset input to allow re-uploading the same file
   };
   
+  const fetchAndApplyRecommendations = async (carId: string, make: string, model: string, year: number, mileage: number) => {
+    try {
+        const recommendedMaintenance = await geminiApi.fetchMaintenanceSchedule(make, model, year, mileage);
+        
+        setCars(prevCars => {
+            return prevCars.map(car => {
+                if (car.id === carId) {
+                    const allMaintenance = [...car.maintenance, ...recommendedMaintenance];
+                    const sortedMaintenance = allMaintenance.sort((a, b) => b.mileage - a.mileage);
+                    return { ...car, maintenance: sortedMaintenance };
+                }
+                return car;
+            });
+        });
 
-  const handleAddCar = async (carData: { make: string; model: string; year: string; mileage: string }) => {
-    setLoading(true);
+    } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        console.error(`Impossibile recuperare il piano di manutenzione per ${make} ${model}: ${errorMessage}`);
+        setError(`Impossibile recuperare il piano di manutenzione per ${make} ${model}. Potrai comunque usare l'app normalmente.`);
+    }
+  };
+
+  const handleAddCar = (carData: { make: string; model: string; year: string; mileage: string }) => {
     setError(null);
     setModalOpen(false);
     
     const year = parseInt(carData.year, 10);
     const mileage = parseInt(carData.mileage, 10);
+    const newCarId = crypto.randomUUID();
 
     const initialRecord: MaintenanceRecord = {
         id: crypto.randomUUID(),
@@ -159,28 +181,20 @@ function App() {
         isRecommendation: false,
     };
 
-    let recommendedMaintenance: MaintenanceRecord[] = [];
-    try {
-        recommendedMaintenance = await geminiApi.fetchMaintenanceSchedule(carData.make, carData.model, year, mileage);
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        setError(`Impossibile recuperare il piano di manutenzione da Gemini: ${errorMessage}`);
-    } finally {
-        const allMaintenance = [initialRecord, ...recommendedMaintenance];
-        const sortedMaintenance = allMaintenance.sort((a, b) => b.mileage - a.mileage);
+    const newCar: Car = {
+      id: newCarId,
+      make: carData.make,
+      model: carData.model,
+      year,
+      maintenance: [initialRecord],
+      knownIssues: [],
+      annualReminders: [],
+    };
 
-        const newCar: Car = {
-          id: crypto.randomUUID(),
-          make: carData.make,
-          model: carData.model,
-          year,
-          maintenance: sortedMaintenance,
-          knownIssues: [],
-        };
+    setCars(prevCars => [...prevCars, newCar]);
     
-        setCars(prevCars => [...prevCars, newCar]);
-        setLoading(false);
-    }
+    // Fetch recommendations in the background
+    fetchAndApplyRecommendations(newCarId, carData.make, carData.model, year, mileage);
   };
   
   const handleAddMaintenance = (newRecord: Omit<MaintenanceRecord, 'id'>) => {
@@ -197,6 +211,20 @@ function App() {
       // Update the selected car instance to reflect the change immediately
       setSelectedCar(updatedCars.find(c => c.id === selectedCar.id) || null);
       setModalOpen(false);
+  };
+  
+  const handleDeleteMaintenanceRecord = (recordId: string) => {
+    if (!selectedCar) return;
+
+    const updatedCars = cars.map(car => {
+        if (car.id === selectedCar.id) {
+            const updatedMaintenance = car.maintenance.filter(record => record.id !== recordId);
+            return { ...car, maintenance: updatedMaintenance };
+        }
+        return car;
+    });
+    setCars(updatedCars);
+    setSelectedCar(updatedCars.find(c => c.id === selectedCar.id) || null);
   };
   
   const handleCarSelect = (car: Car) => {
@@ -263,6 +291,72 @@ function App() {
       setModalOpen('addMaintenance');
   }
 
+  // --- REMINDER HANDLERS ---
+  const handleAddReminder = (newReminderData: Omit<AnnualReminder, 'id' | 'paymentHistory'>) => {
+      if (!selectedCar) return;
+
+      const reminderWithId: AnnualReminder = { 
+          ...newReminderData, 
+          id: crypto.randomUUID(),
+          paymentHistory: [] 
+      };
+
+      const updatedCars = cars.map(car =>
+          car.id === selectedCar.id
+              ? { ...car, annualReminders: [...(car.annualReminders || []), reminderWithId] }
+              : car
+      );
+      setCars(updatedCars);
+      setSelectedCar(updatedCars.find(c => c.id === selectedCar.id) || null);
+      setModalOpen(false);
+  };
+
+  const handlePayReminder = (reminderId: string, paymentAmount: number) => {
+      if (!selectedCar) return;
+
+      const updatedCars = cars.map(car => {
+          if (car.id === selectedCar.id) {
+              const updatedReminders = (car.annualReminders || []).map(reminder => {
+                  if (reminder.id === reminderId) {
+                      const nextDueDate = new Date(reminder.nextDueDate);
+                      nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+
+                      return { 
+                          ...reminder,
+                          nextDueDate: nextDueDate.toISOString().split('T')[0],
+                          paymentHistory: [
+                              ...(reminder.paymentHistory || []),
+                              { date: new Date().toISOString().split('T')[0], amount: paymentAmount }
+                          ]
+                      };
+                  }
+                  return reminder;
+              });
+              return { ...car, annualReminders: updatedReminders };
+          }
+          return car;
+      });
+
+      setCars(updatedCars);
+      setSelectedCar(updatedCars.find(c => c.id === selectedCar.id) || null);
+  };
+
+  const handleDeleteReminder = (reminderId: string) => {
+      if (!selectedCar) return;
+      if (!window.confirm("Sei sicuro di voler eliminare questa scadenza? Verrà eliminata anche la sua cronologia pagamenti.")) return;
+
+      const updatedCars = cars.map(car => {
+          if (car.id === selectedCar.id) {
+              const updatedReminders = (car.annualReminders || []).filter(r => r.id !== reminderId);
+              return { ...car, annualReminders: updatedReminders };
+          }
+          return car;
+      });
+      setCars(updatedCars);
+      setSelectedCar(updatedCars.find(c => c.id === selectedCar.id) || null);
+  };
+
+
     // --- SIMULATION HANDLERS ---
   const handleGenerateSimulation = async (car: Car, targetMileage: number) => {
     setModalOpen(false); // Chiude la modale di setup subito
@@ -308,6 +402,7 @@ function App() {
         ...carToAdd,
         maintenance: [initialRecord, ...recommendedRecords].sort((a,b) => b.mileage - a.mileage),
         knownIssues: [],
+        annualReminders: [],
     };
 
     setCars(prevCars => [...prevCars, finalCar]);
@@ -359,6 +454,10 @@ function App() {
                     onAddIssueClick={() => setModalOpen('addIssue')}
                     onToggleIssue={handleToggleIssue}
                     onDeleteIssue={handleDeleteIssue}
+                    onAddReminderClick={() => setModalOpen('addReminder')}
+                    onPayReminder={handlePayReminder}
+                    onDeleteReminder={handleDeleteReminder}
+                    onDeleteRecommendation={handleDeleteMaintenanceRecord}
                 />
             ) : (
                 <Dashboard 
@@ -393,6 +492,12 @@ function App() {
         open={modalOpen === 'addIssue'}
         onClose={() => setModalOpen(false)}
         onAddIssue={handleAddIssue}
+      />
+
+      <AddReminderModal
+        open={modalOpen === 'addReminder'}
+        onClose={() => setModalOpen(false)}
+        onAddReminder={handleAddReminder}
       />
 
       <SimulationSetupModal

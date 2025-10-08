@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent, Typography, CardActions, Button, Box, Tabs, Tab, Paper } from '@mui/material';
+import { Card, CardContent, Typography, CardActions, Button, Box, Tabs, Tab, Paper, List, ListItem, ListItemIcon, Avatar, ListItemText } from '@mui/material';
+import { EventNote } from '@mui/icons-material';
 import { Car } from '../types.ts';
 import DashboardCharts from './DashboardCharts.tsx';
 
@@ -42,6 +43,14 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setCurrentTab(newValue);
     };
+    
+    const upcomingReminders = cars
+        .flatMap(car => (car.annualReminders || []).map(reminder => ({
+            ...reminder,
+            carId: car.id,
+            carName: `${car.year} ${car.make} ${car.model}`
+        })))
+        .sort((a, b) => new Date(a.nextDueDate).getTime() - new Date(b.nextDueDate).getTime());
 
     return (
         <Box sx={{ width: '100%' }}>
@@ -92,6 +101,32 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect }) => {
                         <Typography color="text.secondary">
                             Aggiungi almeno un intervento di manutenzione con un costo per visualizzare i grafici.
                         </Typography>
+                    </Paper>
+                )}
+
+                 {upcomingReminders.length > 0 && (
+                    <Paper elevation={3} sx={{ p: {xs: 2, md: 3}, mt: 4 }}>
+                        <Typography variant="h5" gutterBottom>
+                            Prossime Scadenze
+                        </Typography>
+                        <List>
+                            {upcomingReminders.slice(0, 5).map(reminder => {
+                                const isOverdue = new Date(reminder.nextDueDate) < new Date();
+                                return (
+                                    <ListItem key={reminder.id}>
+                                        <ListItemIcon>
+                                            <Avatar sx={{ bgcolor: isOverdue ? 'error.main' : 'primary.main' }}>
+                                                <EventNote />
+                                            </Avatar>
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary={`${reminder.description} - €${reminder.amount.toFixed(2)}`}
+                                            secondary={`${reminder.carName} - Scadenza: ${new Date(reminder.nextDueDate).toLocaleDateString()}`}
+                                        />
+                                    </ListItem>
+                                )
+                            })}
+                        </List>
                     </Paper>
                 )}
             </TabPanel>
