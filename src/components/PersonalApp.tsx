@@ -3,7 +3,7 @@ import { Container, Typography, CircularProgress, Box, Alert } from '@mui/materi
 import { observer } from 'mobx-react-lite';
 import Header from './Header.tsx';
 import { useStores } from '../stores/RootStore.ts';
-import { Car } from '../../types.ts';
+import { Car } from '../types.ts';
 import { apiClient } from '../ApiClient.ts';
 import Dashboard from '../../components/Dashboard.tsx';
 

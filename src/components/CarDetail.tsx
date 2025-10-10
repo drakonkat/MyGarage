@@ -20,7 +20,7 @@ import {
     ListItemIcon,
 } from '@mui/material';
 import { AddCircle, YouTube, ShoppingCart, ExpandMore, Delete, AttachMoney, DeleteForever } from '@mui/icons-material';
-import { Car, MaintenanceRecord, ResourceLinks, Reminder } from '../../types.ts';
+import { Car, MaintenanceRecord, ResourceLinks, Reminder } from '../types.ts';
 import { geminiApi } from '../ApiClient.ts';
 
 interface CarDetailProps {

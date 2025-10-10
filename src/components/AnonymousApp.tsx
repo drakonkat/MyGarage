@@ -6,7 +6,7 @@ import {
   Alert,
 } from '@mui/material';
 
-import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from '../../types.ts';
+import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from '../types.ts';
 import { geminiApi } from '../ApiClient.ts';
 import { getCarsFromDB, saveCarsToDB } from '../../db.ts';
 
@@ -33,28 +33,8 @@ function AnonymousApp() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Fix: Add theme state management to satisfy Header component's prop requirements.
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('themeMode') as 'light' | 'dark') || 'dark';
-  });
-  const [primaryColor, setPrimaryColor] = useState<string>(() => {
-    return localStorage.getItem('primaryColor') || (themeMode === 'dark' ? '#90caf9' : '#1976d2');
-  });
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Fix: Add effects to persist theme changes in localStorage.
-  useEffect(() => {
-    localStorage.setItem('themeMode', themeMode);
-    if (localStorage.getItem('primaryColor') === null) {
-        setPrimaryColor(themeMode === 'dark' ? '#90caf9' : '#1976d2');
-    }
-  }, [themeMode]);
-
-  useEffect(() => {
-    localStorage.setItem('primaryColor', primaryColor);
-  }, [primaryColor]);
-
   // Load cars from IndexedDB on initial render
   useEffect(() => {
     const loadData = async () => {
@@ -428,6 +408,10 @@ function AnonymousApp() {
     );
   }, [cars, searchQuery]);
 
+  // TODO: Questa logica per il tema va spostata in MobX.
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
+  const [primaryColor, setPrimaryColor] = useState('#90caf9');
+
   return (
     <>
       <Header
@@ -437,6 +421,7 @@ function AnonymousApp() {
         onSimulateClick={() => setModalOpen('simulationSetup')}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        // Props per il tema temporanee
         themeMode={themeMode}
         setThemeMode={setThemeMode}
         primaryColor={primaryColor}
