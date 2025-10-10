@@ -1,15 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Imposta il percorso di base su relativo ('./').
-  // Questo fa sì che Vite generi percorsi relativi per gli asset (es. "assets/index.js")
-  // invece di percorsi assoluti dalla root (es. "/assets/index.js").
-  // È una soluzione robusta per il deploy su domini custom come mygarage.tnl.one
-  // o in sottocartelle, poiché evita i comuni errori 404 che portano a una pagina bianca.
-  base: './',
+  // Imposta il percorso di base sulla root ('/').
+  // Questo è necessario perché l'app verrà servita dalla radice del dominio
+  // dal server backend, e non più da percorsi relativi.
+  base: '/',
   // Aggiunta per risolvere l'errore "Uncaught Error: An API Key must be set".
   // Questa configurazione inietta la variabile d'ambiente GEMINI_API_KEY
   // nel codice client durante il processo di build, assegnandola a process.env.API_KEY.
@@ -18,4 +17,10 @@ export default defineConfig({
   define: {
     'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
   },
+  build: {
+    // Specifica la cartella di output per la build.
+    // I file verranno collocati in `backend/public`, pronti per essere serviti da Express.
+    outDir: path.resolve(__dirname, 'backend', 'public'),
+    emptyOutDir: true,
+  }
 })

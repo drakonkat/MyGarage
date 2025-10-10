@@ -47,12 +47,11 @@ const AddMaintenanceModal: React.FC<AddMaintenanceModalProps> = ({ open, onClose
                     InputProps={{
                         readOnly: !!defaultDescription,
                     }}
-                    // Use shrink to ensure label is always floated, especially when value is set programmatically
                     InputLabelProps={{ shrink: true }}
                 />
                 <TextField name="date" label="Data" type="date" fullWidth margin="normal" required InputLabelProps={{ shrink: true }} />
                 <TextField name="mileage" label="Chilometraggio (km)" type="number" fullWidth margin="normal" required />
-                <TextField name="cost" label="Costo (€)" type="number" step="0.01" fullWidth margin="normal" required />
+                <TextField name="cost" label="Costo (€)" type="number" inputProps={{ step: "0.01" }} fullWidth margin="normal" required />
                 <TextField name="notes" label="Note" fullWidth margin="normal" multiline rows={2} />
                 <Button type="submit" variant="contained" sx={{ mt: 2 }}>Aggiungi Intervento</Button>
             </Box>

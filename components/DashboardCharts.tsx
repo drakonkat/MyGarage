@@ -27,7 +27,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ cars }) => {
         value: car.maintenance.filter(record => !record.isRecommendation).length,
     }));
     
-    // Filter out cars with no maintenance records for the pie chart to avoid clutter
     const filteredCountData = countData.filter(d => d.value > 0);
 
     return (
@@ -71,9 +70,6 @@ const DashboardCharts: React.FC<DashboardChartsProps> = ({ cars }) => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                // FIX: Coerce `percent` to a number to prevent a TypeScript error.
-                                // The `recharts` library's types can be ambiguous, and this ensures
-                                // the value is treated as a number for the arithmetic operation.
                                 label={({ name, percent }) => `${name} ${(Number(percent) * 100).toFixed(0)}%`}
                             >
                                 {filteredCountData.map((_entry, index) => (

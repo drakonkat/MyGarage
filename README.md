@@ -1,59 +1,87 @@
 # 🚗 Gestione Manutenzione Auto
 
-Un'applicazione web moderna e intuitiva per tracciare, gestire e prevedere la manutenzione dei tuoi veicoli, potenziata dall'intelligenza artificiale di Google Gemini.
+Un'applicazione web moderna e intuitiva per tracciare, gestire e prevedere la manutenzione dei tuoi veicoli, potenziata dall'intelligenza artificiale di Google Gemini e dotata di un backend completo.
 
 ## ✨ Funzionalità Principali
 
 - **Dashboard Veicoli**: Tieni traccia di tutte le tue auto in un unico posto.
 - **Cronologia Dettagliata**: Registra ogni intervento di manutenzione con data, chilometraggio, costi e note.
-- **Raccomandazioni AI**: Ottieni un piano di manutenzione di base generato da Gemini quando aggiungi un nuovo veicolo.
-- **Gestione Problemi**: Annota e monitora i problemi noti per ogni auto, segnandoli come risolti quando necessario.
-- **Simulatore di Costi**: Prevedi i costi di manutenzione futuri per un veicolo fino a un chilometraggio target, incluse stime per assicurazione e bollo.
-- **Ricerca Risorse**: Trova tutorial su YouTube e link per l'acquisto di ricambi per specifici interventi di manutenzione.
+- **Raccomandazioni AI**: Ottieni un piano di manutenzione di base generato da Gemini.
+- **Simulatore di Costi**: Prevedi i costi di manutenzione futuri per un veicolo fino a un chilometraggio target.
+- **Gestionale per Officine**: Funzionalità complete per meccanici, inclusa gestione clienti, preventivi e fatture.
+- **Portale Cliente**: I clienti possono accedere per visualizzare lo storico dei loro veicoli.
+- **Backend Integrato**: Il backend Node.js/Express serve sia l'API che l'applicazione frontend per un deploy semplificato.
 - **Import/Export**: Salva e carica i dati dei tuoi veicoli in formato JSON.
-- **Tema Personalizzabile**: Scegli tra tema chiaro e scuro e personalizza il colore principale dell'interfaccia.
-- **Responsive Design**: Utilizzabile comodamente sia su desktop che su dispositivi mobili.
+- **Tema Personalizzabile**: Scegli tra tema chiaro e scuro e personalizza il colore principale.
 
 ## 🚀 Come Avviare il Progetto
 
-Questa applicazione è progettata per essere eseguita direttamente nel browser senza un processo di build complesso.
+Il progetto è un monorepo con frontend e backend. Gli script nella root gestiscono entrambi.
 
 ### Prerequisiti
 
-1.  Un browser web moderno (Chrome, Firefox, Safari, Edge).
-2.  Un API Key per **Google Gemini API**.
+1.  [Node.js](https://nodejs.org/) (versione 18 o superiore)
+2.  [PostgreSQL](https://www.postgresql.org/) installato e in esecuzione.
+3.  Un API Key per **Google Gemini API**.
 
 ### Configurazione
 
-1.  **Scarica i File**:
-    Assicurati di avere tutti i file del progetto (`index.html`, `App.tsx`, `api.ts`, etc.) nella stessa cartella.
-
-2.  **Imposta l'API Key**:
-    L'applicazione richiede una chiave API di Google Gemini per funzionare. Questa chiave deve essere disponibile come variabile d'ambiente `process.env.API_KEY`. In un ambiente di sviluppo o in una piattaforma come AI Studio, questa variabile è generalmente pre-configurata. Se esegui il progetto localmente, dovrai trovare un modo per fornire questa variabile al browser (ad esempio, tramite un semplice server Node.js con un processo di build).
-
-3.  **Avvia un Server Locale**:
-    Poiché l'applicazione utilizza moduli ES6 (`import`/`export`), non può essere eseguita semplicemente aprendo il file `index.html` dal file system (`file://...`). È necessario servirla tramite un server web locale.
-    
-    Se hai Python installato, puoi usare il suo server integrato dalla cartella del progetto:
+1.  **Clona il Repository**:
     ```bash
-    # Python 3
-    python -m http.server
-    ```
-    
-    In alternativa, se hai Node.js, puoi usare `serve`:
-    ```bash
-    npm install -g serve
-    serve .
+    git clone <repository-url>
+    cd <repository-name>
     ```
 
-4.  **Apri l'App**:
-    Apri il tuo browser e naviga all'indirizzo fornito dal tuo server locale (di solito `http://localhost:8000` o `http://localhost:3000`).
+2.  **Installa Dipendenze**:
+    Installa le dipendenze per il progetto root (frontend).
+    ```bash
+    npm install
+    ```
+
+3.  **Configura il Backend**:
+    Segui le istruzioni nel file `backend/README.md` per configurare il database e il file `.env`.
+
+4.  **Esegui lo Script di Setup del Backend**:
+    Questo comando installerà le dipendenze del backend ed eseguirà le migrazioni del database.
+    ```bash
+    npm run setup:backend
+    ```
+    
+5.  **Imposta l'API Key di Gemini per il Frontend**:
+    Per la build di produzione, l'API key viene iniettata tramite una variabile d'ambiente. Per lo sviluppo locale con `npm run dev`, Vite usa automaticamente le variabili d'ambiente. Crea un file `.env` nella root del progetto e aggiungi la tua chiave:
+    ```env
+    GEMINI_API_KEY="la_tua_chiave_api_di_google"
+    ```
+    *Nota: `vite.config.ts` è configurato per leggere questa variabile e renderla disponibile nell'app come `process.env.API_KEY`.*
+
+
+### Esecuzione in Modalità Sviluppo
+
+Per avviare sia il server di sviluppo di Vite (frontend) che il server Nodemon (backend) contemporaneamente:
+```bash
+npm run dev:full
+```
+-   Il frontend sarà accessibile su `http://localhost:5173` (o un'altra porta indicata da Vite).
+-   Il backend sarà in ascolto su `http://localhost:3001`.
+
+### Esecuzione in Modalità Produzione
+
+Per creare una build di produzione del frontend e servirla tramite il server Express:
+```bash
+npm start
+```
+Questo comando:
+1.  Esegue `npm run build`, che compila il frontend nella cartella `backend/public`.
+2.  Esegue `npm run start:backend`, che avvia il server Express.
+L'applicazione completa sarà accessibile su `http://localhost:3001`.
 
 ## 🛠️ Stack Tecnologico
 
--   **Frontend**: React, TypeScript
+-   **Frontend**: React, TypeScript, Vite
 -   **UI Library**: Material-UI (MUI) v7
--   **State Management**: Pattern basato su `useState` e `useEffect`
 -   **Intelligenza Artificiale**: Google Gemini API (`@google/genai`)
--   **Storage Locale**: IndexedDB (tramite la libreria `idb`)
+-   **Storage Locale (Uso Personale)**: IndexedDB (`idb`)
+-   **Backend**: Node.js, Express
+-   **Database**: PostgreSQL con Sequelize ORM
+-   **Autenticazione**: JWT (JSON Web Tokens)
 -   **Grafici**: Recharts
