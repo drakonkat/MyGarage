@@ -200,8 +200,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                     </Typography>
 
                     <Grid container spacing={4}>
-                        {/* Fix: The Grid component API has been updated. Responsive props are now passed via the 'size' object. */}
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
+                        <Grid item xs={12} md={6}>
                             <List>
                                 <ListItem disableGutters>
                                     <ListItemIcon><People sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
@@ -217,8 +217,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                                 </ListItem>
                             </List>
                         </Grid>
-                        {/* Fix: The Grid component API has been updated. Responsive props are now passed via the 'size' object. */}
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
+                        <Grid item xs={12} md={6}>
                             <List>
                                 <ListItem disableGutters>
                                     <ListItemIcon><MarkEmailRead sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>

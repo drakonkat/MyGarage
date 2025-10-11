@@ -1,75 +1,67 @@
 # 🚗 Backend Gestione Manutenzione Auto
 
-Questo è il backend per l'applicazione di gestione della manutenzione auto. È costruito con Node.js, Express e Sequelize.
+Questo è il backend per l'applicazione di gestione della manutenzione auto. È costruito con Node.js, Express e Sequelize e supporta sia **PostgreSQL** che **MySQL**.
 
 ## 🚀 Primi Passi
-
-Segui questi passaggi per configurare ed eseguire il backend localmente.
 
 ### 1. Prerequisiti
 
 -   [Node.js](https://nodejs.org/) (versione 18 o superiore)
--   [PostgreSQL](https://www.postgresql.org/) installato e in esecuzione.
+-   [PostgreSQL](https://www.postgresql.org/) o [MySQL](https://www.mysql.com/) installato e in esecuzione.
 -   `npm` (incluso con Node.js)
 
-### 2. Installazione
+### 2. Configurazione
 
-Dalla cartella principale del progetto, esegui lo script di setup che installerà le dipendenze del backend:
+La configurazione del backend è gestita tramite variabili d'ambiente.
 
-```bash
-npm run setup:backend
-```
-
-Questo comando farà due cose:
-1.  Eseguirà `npm install` all'interno della cartella `/backend`.
-2.  Eseguirà le migrazioni del database e i seeder.
-
-### 3. Configurazione del Database
-
-1.  Assicurati che il tuo server PostgreSQL sia in esecuzione.
-2.  Crea un database. Ad esempio, `car_maintenance_db`.
-3.  Crea un utente del database con i permessi per accedere al database appena creato.
-
-### 4. Variabili d'Ambiente
-
-1.  Crea una copia del file `.env.example` e rinominala in `.env` all'interno della cartella `backend`.
+1.  **Crea il file `.env`**: Posizionati nella cartella `backend` ed esegui questo comando per creare una copia del file di esempio:
 
     ```bash
     cp .env.example .env
     ```
 
-2.  Modifica il file `.env` con le tue configurazioni:
+2.  **Modifica il file `.env`**: Apri il file `backend/.env` e inserisci le tue credenziali per il database, il server email (SMTP) e un segreto per i token di autenticazione. Troverai commenti dettagliati nel file `.env.example` per guidarti.
 
+    **Esempio di configurazione:**
     ```env
-    # Impostazioni Database
-    DB_DATABASE=car_maintenance_db
-    DB_USER=il_tuo_utente_postgres
-    DB_PASSWORD=la_tua_password
-    DB_HOST=localhost
+    # --- Server Configuration ---
+    PORT=3001
+
+    # --- Database Configuration ---
+    # Scegli il dialetto: 'postgres' o 'mysql'
     DB_DIALECT=postgres
+    DB_HOST=localhost
+    DB_DATABASE=car_maintenance_db
+    DB_USER=your_db_user
+    DB_PASSWORD=your_db_password
 
-    # Segreto per JWT
-    JWT_SECRET=un_segreto_molto_difficile_da_indovinare
+    # --- JSON Web Token (JWT) Configuration ---
+    JWT_SECRET=change_this_to_a_long_random_secret_string
+    JWT_EXPIRES_IN=1d
 
-    # Impostazioni Email (esempio con Mailtrap o un servizio SMTP)
+    # --- Email (SMTP) Configuration ---
+    # Esempio per Mailtrap.io (sviluppo)
     EMAIL_HOST=smtp.mailtrap.io
     EMAIL_PORT=2525
-    EMAIL_USER=il_tuo_utente_smtp
-    EMAIL_PASS=la_tua_password_smtp
-    EMAIL_FROM='"Car Maintenance App" <no-reply@carapp.com>'
+    EMAIL_USER=your_smtp_username
+    EMAIL_PASS=your_smtp_password
+    EMAIL_FROM='"Car Maintenance App" <no-reply@yourdomain.com>'
     ```
+    
+3.  **Crea il Database**: Assicurati che il tuo server di database (PostgreSQL o MySQL) sia in esecuzione, e crea un database con il nome che hai specificato in `DB_DATABASE` (es. `car_maintenance_db`).
 
-### 5. Eseguire le Migrazioni
 
-Se non hai usato lo script `setup:backend`, puoi eseguire le migrazioni manualmente per creare le tabelle nel database:
+### 3. Installazione e Setup
+
+Dalla cartella **principale** del progetto, esegui lo script di setup. Questo comando installerà le dipendenze del backend ed eseguirà le migrazioni del database per creare le tabelle.
 
 ```bash
-npm run db:migrate --prefix backend
+npm run setup:backend
 ```
 
-### 6. Avviare il Server
+### 4. Avviare il Server
 
-Per avviare il server in modalità sviluppo (con riavvio automatico grazie a `nodemon`):
+Per avviare il server in modalità sviluppo (con riavvio automatico):
 
 ```bash
 npm run dev:backend

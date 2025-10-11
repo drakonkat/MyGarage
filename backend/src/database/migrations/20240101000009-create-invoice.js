@@ -50,7 +50,7 @@ module.exports = {
         defaultValue: 'draft'
       },
       items: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         defaultValue: []
       },

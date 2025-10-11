@@ -41,8 +41,8 @@ const LandingPage: React.FC = observer(() => {
                 </Typography>
                 <Grid container spacing={4} alignItems="stretch">
                     {/* Free Tier */}
-                    {/* Fix: The Grid component API has been updated. The 'item' prop is deprecated, and responsive props are now passed via the 'size' object. */}
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
+                    <Grid item xs={12} md={4}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <CardContent sx={{ flexGrow: 1 }}>
                                 <Typography variant="h5" component="div" gutterBottom>
@@ -70,8 +70,8 @@ const LandingPage: React.FC = observer(() => {
                     </Grid>
 
                     {/* Registered Tier */}
-                    {/* Fix: The Grid component API has been updated. The 'item' prop is deprecated, and responsive props are now passed via the 'size' object. */}
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
+                    <Grid item xs={12} md={4}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', border: 2, borderColor: 'primary.main', transform: { md: 'scale(1.05)' }, zIndex: 1 }}>
                              <CardContent sx={{ flexGrow: 1 }}>
                                 <Typography variant="h5" component="div">
@@ -98,8 +98,8 @@ const LandingPage: React.FC = observer(() => {
                     </Grid>
                     
                      {/* Professional Tier */}
-                    {/* Fix: The Grid component API has been updated. The 'item' prop is deprecated, and responsive props are now passed via the 'size' object. */}
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
+                    <Grid item xs={12} md={4}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <CardContent sx={{ flexGrow: 1 }}>
                                 <Typography variant="h5" component="div">

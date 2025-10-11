@@ -26,7 +26,7 @@ module.exports = {
         allowNull: false
       },
       paymentHistory: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         defaultValue: []
       },
       carId: {

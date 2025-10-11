@@ -79,6 +79,7 @@ const CarDetail: React.FC<CarDetailProps> = ({
         }
     };
     
+    // Fix: By providing a typed initial value to `reduce`, we ensure TypeScript correctly infers the type of the resulting object.
     const maintenanceGroups = (car.maintenance || []).reduce((acc, record) => {
         const key = record.description;
         if (!acc[key]) {

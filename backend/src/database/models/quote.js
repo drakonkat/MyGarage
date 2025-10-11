@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
     expiryDate: DataTypes.DATE,
     totalAmount: DataTypes.FLOAT,
     status: DataTypes.ENUM('draft', 'sent', 'accepted', 'rejected', 'invoiced'),
-    items: DataTypes.JSONB,
+    items: DataTypes.JSON,
     notes: DataTypes.TEXT
   }, {
     sequelize,

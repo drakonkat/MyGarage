@@ -11,7 +11,5 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.removeColumn('Users', 'role');
-    // Se stai usando PostgreSQL, potresti dover rimuovere anche il tipo ENUM manualmente.
-    // await queryInterface.sequelize.query('DROP TYPE "enum_Users_role";');
   }
 };

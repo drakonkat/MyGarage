@@ -20,7 +20,7 @@ export default (sequelize, DataTypes) => {
     dueDate: DataTypes.DATE,
     totalAmount: DataTypes.FLOAT,
     status: DataTypes.ENUM('draft', 'sent', 'paid', 'overdue', 'cancelled'),
-    items: DataTypes.JSONB,
+    items: DataTypes.JSON,
     notes: DataTypes.TEXT
   }, {
     sequelize,

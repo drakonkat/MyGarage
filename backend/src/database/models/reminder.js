@@ -22,7 +22,7 @@ export default (sequelize, DataTypes) => {
     amount: DataTypes.FLOAT,
     frequency: DataTypes.ENUM('monthly', 'annual', 'biennial'),
     paymentHistory: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       defaultValue: []
     },
     carId: DataTypes.UUID
