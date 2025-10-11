@@ -248,8 +248,10 @@ const CarDetail: React.FC<CarDetailProps> = ({
                 {Object.entries(maintenanceGroups).map(([description, records]) => {
                     if (description === 'Veicolo aggiunto al sistema') return null;
 
-                    const recommendation = records.find(r => r.isRecommendation);
-                    const history = records.filter(r => !r.isRecommendation).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    // Fix: Explicitly cast `records` as MaintenanceRecord[] to resolve a TypeScript type inference issue.
+                    const typedRecords = records as MaintenanceRecord[];
+                    const recommendation = typedRecords.find(r => r.isRecommendation);
+                    const history = typedRecords.filter(r => !r.isRecommendation).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                     return (
                         <Card variant="outlined" key={description} sx={{ mb: 2 }}>

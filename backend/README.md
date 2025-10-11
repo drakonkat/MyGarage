@@ -31,6 +31,7 @@ La configurazione del backend è gestita tramite variabili d'ambiente.
     # Scegli il dialetto: 'postgres' o 'mysql'
     DB_DIALECT=postgres
     DB_HOST=localhost
+    DB_PORT=5432
     DB_DATABASE=car_maintenance_db
     DB_USER=your_db_user
     DB_PASSWORD=your_db_password
