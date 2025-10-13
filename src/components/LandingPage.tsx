@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Container, Box, Typography, Button, Card, CardContent, CardActions,
-    List, ListItem, ListItemIcon, ListItemText, Grid, Stack
+    List, ListItem, ListItemIcon, ListItemText, Stack
 } from '@mui/material';
 import {
     CheckCircleOutline, CarCrash, Login, AppRegistration,
@@ -39,10 +39,9 @@ const LandingPage: React.FC = observer(() => {
                 <Typography variant="h4" component="h2" fontWeight="bold" textAlign="center" gutterBottom sx={{ mb: 6 }}>
                     Scegli il piano adatto a te
                 </Typography>
-                <Grid container spacing={4} alignItems="stretch">
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', mx: -2 }}>
                     {/* Free Tier */}
-                    {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
-                    <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 2, width: { xs: '100%', md: '33.333%' } }}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <CardContent sx={{ flexGrow: 1 }}>
                                 <Typography variant="h5" component="div" gutterBottom>
@@ -67,11 +66,10 @@ const LandingPage: React.FC = observer(() => {
                                 </Button>
                             </CardActions>
                         </Card>
-                    </Grid>
+                    </Box>
 
                     {/* Registered Tier */}
-                    {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
-                    <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 2, width: { xs: '100%', md: '33.333%' } }}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', border: 2, borderColor: 'primary.main', transform: { md: 'scale(1.05)' }, zIndex: 1 }}>
                              <CardContent sx={{ flexGrow: 1 }}>
                                 <Typography variant="h5" component="div">
@@ -95,11 +93,10 @@ const LandingPage: React.FC = observer(() => {
                                 <Button size="large" variant="contained" fullWidth onClick={() => viewStore.setView('signup')}>Registrati Ora</Button>
                             </CardActions>
                         </Card>
-                    </Grid>
+                    </Box>
                     
                      {/* Professional Tier */}
-                    {/* Fix: The Grid component API has been updated. Responsive props are now passed directly. */}
-                    <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 2, width: { xs: '100%', md: '33.333%' } }}>
                         <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <CardContent sx={{ flexGrow: 1 }}>
                                 <Typography variant="h5" component="div">
@@ -124,8 +121,8 @@ const LandingPage: React.FC = observer(() => {
                                  </Button>
                             </CardActions>
                         </Card>
-                    </Grid>
-                </Grid>
+                    </Box>
+                </Box>
             </Container>
 
             {/* Footer */}

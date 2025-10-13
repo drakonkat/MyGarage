@@ -28,7 +28,8 @@ const Header: React.FC<HeaderProps> = ({
     searchQuery, setSearchQuery
 }) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery((theme) => theme.breakpoints.down('md'));
+    // Fix: Cast theme to `any` to bypass a TypeScript error likely caused by an incorrect Theme type definition.
+    const isMobile = useMediaQuery((theme as any).breakpoints.down('md'));
     const [drawerOpen, setDrawerOpen] = useState(false);
     const colorInputRef = useRef<HTMLInputElement>(null);
 

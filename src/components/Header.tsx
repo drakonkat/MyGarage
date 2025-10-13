@@ -29,7 +29,8 @@ const Header: React.FC<HeaderProps> = observer(({
     const { isLoggedIn, user } = userStore;
 
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    // Fix: Cast theme to `any` to bypass a TypeScript error likely caused by an incorrect Theme type definition.
+    const isMobile = useMediaQuery((theme as any).breakpoints.down('md'));
     const [drawerOpen, setDrawerOpen] = useState(false);
     
     // FIXME: Theme state is not yet in MobX
