@@ -13,7 +13,6 @@ import {
     ListItemIcon,
     ListItemText,
     Paper,
-    Grid,
 } from '@mui/material';
 import {
     ArrowForward,
@@ -199,9 +198,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         Semplifica la gestione, fidelizza i clienti e aumenta la tua efficienza con strumenti pensati per il meccanico moderno.
                     </Typography>
 
-                    <Grid container spacing={4}>
-                        {/* Fix: The Grid component API has been updated. The `item` prop is no longer necessary as it is inferred from responsive props (xs, md). */}
-                        <Grid xs={12} md={6}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
+                        <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
                             <List>
                                 <ListItem disableGutters>
                                     <ListItemIcon><People sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
@@ -216,9 +214,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                                     <ListItemText primary="Prenotazioni Online" secondary="Permetti ai clienti di prenotare appuntamenti direttamente dal loro portale, riducendo le telefonate e ottimizzando il tuo calendario." />
                                 </ListItem>
                             </List>
-                        </Grid>
-                        {/* Fix: The Grid component API has been updated. The `item` prop is no longer necessary as it is inferred from responsive props (xs, md). */}
-                        <Grid xs={12} md={6}>
+                        </Box>
+                        <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
                             <List>
                                 <ListItem disableGutters>
                                     <ListItemIcon><MarkEmailRead sx={{ fontSize: 32, color: 'primary.main' }} /></ListItemIcon>
@@ -233,8 +230,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                                     <ListItemText primary="Report e Statistiche" secondary="Analizza le performance della tua officina, visualizza i servizi più richiesti e monitora i ricavi con report intuitivi." />
                                 </ListItem>
                             </List>
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
 
                     <Box sx={{ mt: 6, textAlign: 'center' }}>
                         <Typography sx={{ mb: 2, fontStyle: 'italic' }}>

@@ -86,7 +86,7 @@ const LandingPage: React.FC = observer(() => {
                                     <ListItem disableGutters><ListItemIcon sx={{minWidth: 32}}><CheckCircleOutline color="primary" /></ListItemIcon><ListItemText primary="Tutte le feature della prova" /></ListItem>
                                     <ListItem disableGutters><ListItemIcon sx={{minWidth: 32}}><CloudSync color="primary" /></ListItemIcon><ListItemText primary="Backup nel cloud" /></ListItem>
                                     <ListItem disableGutters><ListItemIcon sx={{minWidth: 32}}><Devices color="primary" /></ListItemIcon><ListItemText primary="Accesso multi-dispositivo" /></ListItem>
-                                    <ListItem disableGutters><ListItemIcon sx={{minWidth: 32}}><Email color="disabled" /></ListItemIcon><ListItemText primary="Reminder via email" secondary="Prossimamente" /></ListItem>
+                                    <ListItem disableGutters><ListItemIcon sx={{minWidth: 32}}><Email color="primary" /></ListItemIcon><ListItemText primary="Reminder via email" /></ListItem>
                                 </List>
                             </CardContent>
                             <CardActions sx={{ p: 2 }}>

@@ -1,12 +1,51 @@
 import React, { useState } from 'react';
 import {
   Container, Box, Typography, TextField, Button,
-  CircularProgress, Alert, FormControl, FormLabel,
-  RadioGroup, FormControlLabel, Radio
+  CircularProgress, Alert, Paper, List, ListItem, ListItemText,
+  ListItemIcon, Collapse, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
+import { Person, Engineering, CheckCircleOutline } from '@mui/icons-material';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../../stores/RootStore.ts';
 import AuthHeader from './AuthHeader.tsx';
+
+const featureContent = {
+    personal: {
+        title: 'Ideale per l\'utente privato',
+        features: [
+            'Salva i dati delle tue auto nel cloud, al sicuro.',
+            'Accedi alla cronologia dei tuoi veicoli da qualsiasi dispositivo.',
+            'Ricevi promemoria via email per le scadenze (Prossimamente!).'
+        ]
+    },
+    mechanic: {
+        title: 'La soluzione per l\'officina moderna',
+        features: [
+            'Gestisci i tuoi clienti e il loro intero parco auto.',
+            'Crea e invia preventivi e fatture digitali in pochi click.',
+            'Offri un portale dedicato ai tuoi clienti per fidelizzarli.'
+        ]
+    }
+};
+
+// Helper component per non ripetere il codice
+const FeaturePaper: React.FC<{ content: { title: string; features: string[] } }> = ({ content }) => (
+    <Paper variant="outlined" sx={{ p: 2, mt: 2, borderColor: 'primary.main', bgcolor: 'action.hover' }}>
+        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            {content.title}
+        </Typography>
+        <List dense sx={{ py: 0, '& .MuiListItem-root': { p: 0 } }}>
+            {content.features.map((text, index) => (
+                <ListItem key={index}>
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                        <CheckCircleOutline fontSize="small" color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary={text} primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }} />
+                </ListItem>
+            ))}
+        </List>
+    </Paper>
+);
 
 const SignupPage: React.FC = observer(() => {
   const { userStore, viewStore } = useStores();
@@ -51,7 +90,7 @@ const SignupPage: React.FC = observer(() => {
           <Typography component="h1" variant="h5">
             Registrati
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3, width: '100%' }}>
             <TextField
               margin="normal"
               required
@@ -86,19 +125,38 @@ const SignupPage: React.FC = observer(() => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            <FormControl component="fieldset" sx={{ mt: 2, width: '100%' }}>
-              <FormLabel component="legend">Tipo di account</FormLabel>
-              <RadioGroup
-                row
-                aria-label="role"
-                name="role"
+            
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="account-type-select-label">Scegli il tipo di account</InputLabel>
+              <Select
+                labelId="account-type-select-label"
                 value={role}
+                label="Scegli il tipo di account"
                 onChange={(e) => setRole(e.target.value as 'personal' | 'mechanic')}
               >
-                <FormControlLabel value="personal" control={<Radio />} label="Personale" />
-                <FormControlLabel value="mechanic" control={<Radio />} label="Officina" />
-              </RadioGroup>
+                <MenuItem value="personal">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Person sx={{ mr: 1, color: 'text.secondary' }} />
+                    <ListItemText primary="Personale" />
+                  </Box>
+                </MenuItem>
+                <MenuItem value="mechanic">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Engineering sx={{ mr: 1, color: 'text.secondary' }} />
+                    <ListItemText primary="Officina" />
+                  </Box>
+                </MenuItem>
+              </Select>
             </FormControl>
+
+            <Box sx={{ minHeight: '160px', mt: 1 }}>
+                <Collapse in={role === 'personal'} timeout="auto" unmountOnExit>
+                    <FeaturePaper content={featureContent.personal} />
+                </Collapse>
+                <Collapse in={role === 'mechanic'} timeout="auto" unmountOnExit>
+                    <FeaturePaper content={featureContent.mechanic} />
+                </Collapse>
+            </Box>
             
             {(userStore.error || formError) && <Alert severity="error" sx={{width: '100%', mt: 2}}>{userStore.error || formError}</Alert>}
 
