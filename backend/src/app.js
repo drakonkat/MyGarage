@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { sequelize } from './database/models/index.js';
+import db from './database/models/index.js';
 import routes from './routes/index.js';
 import reminderScheduler from './jobs/reminderScheduler.js';
 
@@ -30,7 +30,7 @@ app.get(/^(?!\/api).*/, (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-sequelize.sync().then(() => {
+db.sequelize.sync().then(() => {
   console.log('Database connected successfully.');
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
