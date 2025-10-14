@@ -163,6 +163,13 @@ class ApiClient {
             body: JSON.stringify({ clientEmail }),
         });
     }
+
+    async createClient(email: string, password: string): Promise<any> {
+        return this.request('/mechanic/clients/create', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
+        });
+    }
     // ... Altri metodi per il meccanico
 }
 

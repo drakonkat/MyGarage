@@ -5,7 +5,7 @@ import Header from './Header.tsx';
 import { useStores } from '../stores/RootStore.ts';
 import { Car } from '../types.ts';
 import { apiClient } from '../ApiClient.ts';
-import Dashboard from '../../components/Dashboard.tsx';
+import Dashboard from './Dashboard.tsx';
 
 
 const PersonalApp: React.FC = observer(() => {

@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { AddCircle, YouTube, ShoppingCart, ExpandMore, Delete, AttachMoney, DeleteForever } from '@mui/icons-material';
 import { Car, MaintenanceRecord, ResourceLinks, Reminder } from '../types.ts';
+// Fix: Corrected import path for geminiApi to align with the project structure.
 import { geminiApi } from '../ApiClient.ts';
 
 interface CarDetailProps {

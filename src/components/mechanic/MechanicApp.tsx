@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import Header from '../Header.tsx';
 import { useStores } from '../../stores/RootStore.ts';
 import { apiClient } from '../../ApiClient.ts';
+import CreateClientModal from './CreateClientModal.tsx';
 
 interface Client {
     id: number;
@@ -18,6 +19,8 @@ const MechanicApp: React.FC = observer(() => {
     const [error, setError] = useState<string | null>(null);
     const [clientEmail, setClientEmail] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+    const [showCreateClientModal, setShowCreateClientModal] = useState(false);
+    const [emailForNewClient, setEmailForNewClient] = useState('');
 
     const fetchClients = async () => {
         try {
@@ -47,11 +50,24 @@ const MechanicApp: React.FC = observer(() => {
             setClientEmail('');
             await fetchClients(); // Refresh client list
         } catch(err: any) {
-            setError(err.message || "Errore nell'aggiunta del cliente.");
+            if (err.message && err.message.toLowerCase().includes("not found")) {
+                setEmailForNewClient(clientEmail);
+                setShowCreateClientModal(true);
+            } else {
+                setError(err.message || "Errore nell'aggiunta del cliente.");
+            }
         } finally {
             setIsAdding(false);
         }
     };
+
+    const handleClientCreated = () => {
+        setShowCreateClientModal(false);
+        setClientEmail('');
+        setEmailForNewClient('');
+        fetchClients();
+    };
+
 
     return (
         <>
@@ -63,20 +79,21 @@ const MechanicApp: React.FC = observer(() => {
                 
                 <Box component="form" onSubmit={handleAddClient} sx={{ display: 'flex', gap: 2, mb: 4, alignItems: 'center' }}>
                      <TextField
-                        label="Email nuovo cliente"
+                        label="Email cliente da aggiungere o creare"
                         variant="outlined"
                         size="small"
                         value={clientEmail}
                         onChange={(e) => setClientEmail(e.target.value)}
                         required
                         type="email"
+                        sx={{flexGrow: 1}}
                     />
                     <Button type="submit" variant="contained" disabled={isAdding}>
-                        {isAdding ? <CircularProgress size={24} /> : 'Aggiungi Cliente'}
+                        {isAdding ? <CircularProgress size={24} /> : 'Aggiungi'}
                     </Button>
                 </Box>
                 
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>}
 
                 <Typography variant="h5" gutterBottom>
                     I Miei Clienti
@@ -86,7 +103,7 @@ const MechanicApp: React.FC = observer(() => {
                     <CircularProgress />
                 ) : (
                     <List>
-                        {clients.length === 0 && <Typography>Nessun cliente trovato.</Typography>}
+                        {clients.length === 0 && <Typography>Nessun cliente trovato. Aggiungine uno per iniziare.</Typography>}
                         {clients.map(client => (
                             <ListItem key={client.id} divider>
                                 <ListItemText 
@@ -98,6 +115,12 @@ const MechanicApp: React.FC = observer(() => {
                     </List>
                 )}
             </Container>
+            <CreateClientModal
+                open={showCreateClientModal}
+                onClose={() => setShowCreateClientModal(false)}
+                onClientCreated={handleClientCreated}
+                initialEmail={emailForNewClient}
+            />
         </>
     );
 });

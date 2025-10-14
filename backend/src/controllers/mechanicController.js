@@ -1,5 +1,6 @@
+import bcrypt from 'bcryptjs';
 import db from '../database/models/index.js';
-const { User, Quote, Invoice, Car } = db;
+const { User, Quote, Invoice, Car, MechanicClient } = db;
 
 // Funzione di utilità per generare numeri sequenziali
 async function generateNextNumber(model, field, prefix) {
@@ -24,26 +25,70 @@ const mechanicController = {
         try {
             const client = await User.findOne({ where: { email: clientEmail } });
             if (!client) {
-                return res.status(404).json({ message: "Client with this email not found." });
+                return res.status(404).json({ message: "Cliente con questa email non trovato." });
             }
             if (client.id === mechanicId) {
-                return res.status(400).json({ message: "You cannot add yourself as a client." });
+                return res.status(400).json({ message: "Non puoi aggiungere te stesso come cliente." });
             }
 
             const mechanic = await User.findByPk(mechanicId);
+            // Uso l'associazione `addClient` generata da Sequelize
             await mechanic.addClient(client);
 
-            res.status(201).json({ message: "Client added successfully." });
+            res.status(201).json({ message: "Cliente aggiunto con successo." });
 
         } catch (error) {
             if (error.name === 'SequelizeUniqueConstraintError') {
-                 return res.status(409).json({ message: 'This user is already your client.' });
+                 return res.status(409).json({ message: 'Questo utente è già un tuo cliente.' });
             }
             console.error(error);
-            res.status(500).json({ message: "Error adding client." });
+            res.status(500).json({ message: "Errore nell'aggiunta del cliente." });
         }
     },
     
+    createClient: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email e password sono obbligatorie.' });
+        }
+
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(409).json({ message: 'Un utente con questa email esiste già. Usa la funzione "Aggiungi Cliente" per associarlo.' });
+        }
+
+        const t = await db.sequelize.transaction();
+
+        try {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const newClient = await User.create({
+                email,
+                password: hashedPassword,
+                role: 'personal',
+            }, { transaction: t });
+            
+            // L'associazione diretta tramite tabella di join
+            await MechanicClient.create({
+                mechanicId: mechanicId,
+                clientId: newClient.id
+            }, { transaction: t });
+
+            await t.commit();
+
+            res.status(201).json({ 
+                message: "Cliente creato e aggiunto con successo.",
+                client: { id: newClient.id, email: newClient.email }
+            });
+
+        } catch (error) {
+            await t.rollback();
+            console.error('Errore nella creazione del cliente:', error);
+            res.status(500).json({ message: 'Errore interno del server durante la creazione del cliente.' });
+        }
+    },
+
     getClients: async (req, res) => {
         const mechanicId = req.user.id;
         try {
@@ -58,7 +103,7 @@ const mechanicController = {
             res.status(200).json(mechanic.clients);
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: "Error fetching clients." });
+            res.status(500).json({ message: "Errore nel recupero dei clienti." });
         }
     },
 
@@ -74,13 +119,13 @@ const mechanicController = {
                 }]
             });
             if (!client) {
-                return res.status(404).json({ message: "Client not found" });
+                return res.status(404).json({ message: "Cliente non trovato" });
             }
             // Qui si potrebbe aggiungere un controllo per assicurarsi che il richiedente sia il meccanico di questo cliente
             res.status(200).json(client);
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: "Error fetching client details." });
+            res.status(500).json({ message: "Errore nel recupero dei dettagli del cliente." });
         }
     },
 
@@ -105,7 +150,7 @@ const mechanicController = {
             res.status(201).json(quote);
          } catch(error) {
             console.error(error);
-            res.status(500).json({ message: "Error creating quote." });
+            res.status(500).json({ message: "Errore nella creazione del preventivo." });
          }
     },
 
@@ -116,7 +161,7 @@ const mechanicController = {
             res.status(200).json(quotes);
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: "Error fetching quotes." });
+            res.status(500).json({ message: "Errore nel recupero dei preventivi." });
         }
     },
 
@@ -144,7 +189,7 @@ const mechanicController = {
             res.status(201).json(invoice);
         } catch(error) {
             console.error(error);
-            res.status(500).json({ message: "Error creating invoice." });
+            res.status(500).json({ message: "Errore nella creazione della fattura." });
         }
     },
 
@@ -155,7 +200,7 @@ const mechanicController = {
             res.status(200).json(invoices);
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: "Error fetching invoices." });
+            res.status(500).json({ message: "Errore nel recupero delle fatture." });
         }
     }
 };

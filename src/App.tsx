@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
 import { observer } from 'mobx-react-lite';
 import { RootStoreProvider, useStores } from './stores/RootStore.ts';
-import { getTheme } from '../theme.ts';
+import { getTheme } from './theme.ts';
 
 import LandingPage from './components/LandingPage.tsx';
 import LoginPage from './components/auth/LoginPage.tsx';

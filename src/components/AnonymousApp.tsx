@@ -6,9 +6,9 @@ import {
   Alert,
 } from '@mui/material';
 
-import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from '../types.ts';
+import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from '../../types.ts';
 import { geminiApi } from '../ApiClient.ts';
-import { getCarsFromDB, saveCarsToDB } from '../../db.ts';
+import { getCarsFromDB, saveCarsToDB } from '../db.ts';
 
 import Header from '../../components/Header.tsx';
 import Dashboard from '../../components/Dashboard.tsx';
@@ -408,10 +408,6 @@ function AnonymousApp() {
     );
   }, [cars, searchQuery]);
 
-  // TODO: Questa logica per il tema va spostata in MobX.
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
-  const [primaryColor, setPrimaryColor] = useState('#90caf9');
-
   return (
     <>
       <Header
@@ -421,11 +417,6 @@ function AnonymousApp() {
         onSimulateClick={() => setModalOpen('simulationSetup')}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        // Props per il tema temporanee
-        themeMode={themeMode}
-        setThemeMode={setThemeMode}
-        primaryColor={primaryColor}
-        setPrimaryColor={setPrimaryColor}
       />
       <input
         type="file"

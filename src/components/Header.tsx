@@ -17,6 +17,8 @@ interface HeaderProps {
     onExport?: () => void;
     onAddCarClick?: () => void;
     onSimulateClick?: () => void;
+    searchQuery?: string;
+    setSearchQuery?: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const Header: React.FC<HeaderProps> = observer(({
