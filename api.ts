@@ -12,7 +12,12 @@ import {
     AnnualCostEstimate
 } from './types.ts';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env?.VITE_GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+if (!apiKey) {
+    console.warn("VITE_GEMINI_API_KEY is not defined for legacy api.ts. AI features will not work.");
+}
 
 // --- Caching Layer ---
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 ore in millisecondi
@@ -132,6 +137,8 @@ export const externalApi = {
 // --- Gemini API Service ---
 export const geminiApi = {
     async fetchMaintenanceSchedule(make: string, model: string, year: number, currentMileage: number): Promise<MaintenanceRecord[]> {
+        if (!ai) throw new Error("Gemini AI not available: API key not configured.");
+        
         const prompt = `Genera in italiano una lista base di 3-5 interventi di manutenzione chiave per una ${year} ${make} ${model} con un chilometraggio attuale di ${currentMileage} km.
 Per ogni intervento, suggerisci il PROSSIMO chilometraggio a cui effettuarlo.
 Rispondi solo con un array JSON di oggetti. Ogni oggetto deve avere:
@@ -163,6 +170,7 @@ Il JSON deve essere formattato correttamente.`;
         return schedule.map(item => ({ ...item, id: crypto.randomUUID(), date: 'N/A', cost: 0, isRecommendation: true })) as MaintenanceRecord[];
     },
     async fetchMaintenanceSimulation(car: Car, targetMileage: number): Promise<{ records: MaintenanceRecord[], annualCosts: AnnualCostEstimate }> {
+        if (!ai) throw new Error("Gemini AI not available: API key not configured.");
         const currentMileage = car.maintenance.length > 0 ? Math.max(...car.maintenance.map(m => m.mileage)) : 0;
         
         const prompt = `Genera in italiano una simulazione dei costi di manutenzione per una ${car.year} ${car.make} ${car.model}.
@@ -234,6 +242,7 @@ Il JSON deve essere formattato correttamente.`;
         return { records, annualCosts };
     },
     async fetchResources(car: Car, record: MaintenanceRecord): Promise<ResourceLinks> {
+        if (!ai) throw new Error("Gemini AI not available: API key not configured.");
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: `Find resources for this maintenance task: "${record.description}" on a ${car.year} ${car.make} ${car.model}. Provide a YouTube tutorial link and a link to buy parts (e.g., from AutoDoc or a similar site). Respond as a JSON object with keys "youtube" and "parts_link".`,

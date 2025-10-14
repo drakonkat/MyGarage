@@ -15,14 +15,16 @@ import {
 // --- Gemini AI Setup ---
 // Inizializzazione condizionale per prevenire crash se la chiave API manca.
 let ai: GoogleGenAI | null = null;
-if (process.env.API_KEY) {
+const apiKey = import.meta.env?.VITE_GEMINI_API_KEY;
+
+if (apiKey) {
     try {
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        ai = new GoogleGenAI({ apiKey });
     } catch (e) {
         console.error("Impossibile inizializzare GoogleGenAI. Le funzionalità IA useranno i dati di fallback.", e);
     }
 } else {
-    console.warn("GEMINI_API_KEY non è impostata. Le funzionalità IA useranno i dati di fallback.");
+    console.warn("VITE_GEMINI_API_KEY non è impostata. Le funzionalità IA useranno i dati di fallback.");
 }
 
 // --- Funzioni di Fallback ---
@@ -93,7 +95,8 @@ class ApiClient {
     private token: string | null = null;
 
     constructor() {
-        this.baseUrl = '/api/v1';
+        // Usa una variabile d'ambiente per l'URL di base dell'API, con un fallback a un percorso relativo per la produzione
+        this.baseUrl = import.meta.env?.VITE_API_BASE_URL || '/api/v1';
     }
 
     setToken(token: string | null) {

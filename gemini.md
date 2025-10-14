@@ -52,6 +52,7 @@ Questa è un'applicazione **monorepo** che contiene un frontend e un backend sep
     -   `externalApi`: Per altre API di terze parti (es. Auto-Doc).
 -   `db.ts`: Logica di interazione con IndexedDB. **Usata solo dalla modalità anonima**.
 -   `types.ts`: Definizioni TypeScript centralizzate.
+-   `vite-env.d.ts`: File di dichiarazione dei tipi per Vite. Rende `import.meta.env` disponibile a TypeScript.
 
 ### `/backend` (Backend)
 
@@ -101,3 +102,17 @@ Questa è un'applicazione **monorepo** che contiene un frontend e un backend sep
 1.  **Centralizza la Logica**: Tutte le chiamate all'API di Gemini **devono** passare attraverso l'oggetto `geminiApi` in `src/ApiClient.ts`.
 2.  **Gestisci il Fallback**: La logica di `geminiApi` include già un meccanismo di fallback che fornisce dati generici se la chiave API non è presente o se la chiamata fallisce. Assicurati che le tue nuove funzioni rispettino questo pattern per garantire che l'app rimanga funzionale in ogni circostanza.
 3.  **Prompt Engineering**: Formula i prompt in modo chiaro e conciso. Specifica sempre il formato di output desiderato (JSON) e definisci uno `responseSchema` per garantire risposte strutturate e affidabili.
+---
+
+## 4. Configurazione e Ambiente
+
+### Variabili d'Ambiente (Frontend)
+
+Il frontend riconosce le seguenti variabili d'ambiente (da inserire in un file `.env` nella root del progetto). Per essere esposte al codice nel browser, **devono** avere il prefisso `VITE_`.
+
+-   `VITE_GEMINI_API_KEY`: La tua chiave API per Google Gemini. Viene usata per le funzionalità di intelligenza artificiale. Se non fornita, l'app userà dati di fallback.
+-   `VITE_API_BASE_URL`: **(Opzionale)** L'URL completo del tuo backend (es. `https://api.tuosito.com/api/v1`). Impostalo solo se il frontend è servito da un dominio diverso dal backend. Se non impostato, l'app presumerà che il backend sia sullo stesso dominio (usando il percorso relativo `/api/v1`).
+
+### Proxy di Sviluppo
+
+Quando esegui l'app in locale con `npm run dev:full`, il frontend (Vite) e il backend (Node) girano su porte diverse. Per permettere al frontend di comunicare con il backend, è stato configurato un **proxy** in `vite.config.ts`. Questo inoltra automaticamente tutte le richieste da `/api/v1` al server backend su `http://localhost:3001`. Non è richiesta alcuna configurazione manuale per lo sviluppo locale.

@@ -14,13 +14,14 @@ export default defineConfig({
   // Questo è necessario perché l'app verrà servita dalla radice del dominio
   // dal server backend, e non più da percorsi relativi.
   base: '/',
-  // Aggiunta per risolvere l'errore "Uncaught Error: An API Key must be set".
-  // Questa configurazione inietta la variabile d'ambiente GEMINI_API_KEY
-  // nel codice client durante il processo di build, assegnandola a process.env.API_KEY.
-  // Assicurati di impostare la variabile d'ambiente GEMINI_API_KEY quando esegui `npm run build`.
-  // Esempio: GEMINI_API_KEY="your_google_api_key" npm run build
-  define: {
-    'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
+  server: {
+    proxy: {
+      // Proxy delle richieste API al server backend durante lo sviluppo
+      '/api/v1': {
+        target: 'http://localhost:3001', // L'indirizzo del server backend
+        changeOrigin: true, // Consigliato per host virtuali
+      },
+    },
   },
   build: {
     // Specifica la cartella di output per la build.

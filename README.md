@@ -48,11 +48,11 @@ Il progetto è un monorepo con frontend e backend. Gli script nella root gestisc
     ```
     
 5.  **Imposta l'API Key di Gemini per il Frontend**:
-    Per la build di produzione, l'API key viene iniettata tramite una variabile d'ambiente. Per lo sviluppo locale con `npm run dev`, Vite usa automaticamente le variabili d'ambiente. Crea un file `.env` nella root del progetto e aggiungi la tua chiave:
+    Vite espone in modo sicuro le variabili d'ambiente al codice frontend solo se hanno il prefisso `VITE_`. Crea un file `.env` nella root del progetto (se non esiste) e aggiungi la tua chiave API in questo formato:
     ```env
-    GEMINI_API_KEY="la_tua_chiave_api_di_google"
+    VITE_GEMINI_API_KEY="la_tua_chiave_api_di_google"
     ```
-    *Nota: `vite.config.ts` è configurato per leggere questa variabile e renderla disponibile nell'app come `process.env.API_KEY`.*
+    L'applicazione leggerà questa variabile tramite `import.meta.env.VITE_GEMINI_API_KEY`.
 
 
 ### Esecuzione in Modalità Sviluppo
