@@ -22,9 +22,21 @@ const mechanicController = {
       const overdueInvoices = await Invoice.count({ where: { mechanicId, status: 'overdue' } });
       
       const thisYear = new Date().getFullYear();
+      
+      // Dialect-specific date formatting
+      const dialect = sequelize.options.dialect;
+      let dateFunction;
+      if (dialect === 'mysql') {
+        dateFunction = sequelize.fn('DATE_FORMAT', sequelize.col('invoiceDate'), '%Y-%m');
+      } else if (dialect === 'postgres') {
+        dateFunction = sequelize.fn('to_char', sequelize.col('invoiceDate'), 'YYYY-MM');
+      } else { // Default to sqlite
+        dateFunction = sequelize.fn('strftime', '%Y-%m', sequelize.col('invoiceDate'));
+      }
+
       const monthlyRevenueRaw = await Invoice.findAll({
          attributes: [
-            [sequelize.fn('strftime', '%Y-%m', sequelize.col('invoiceDate')), 'month'],
+            [dateFunction, 'month'],
             [sequelize.fn('SUM', sequelize.col('totalAmount')), 'revenue']
         ],
         where: {
