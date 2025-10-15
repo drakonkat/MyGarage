@@ -97,7 +97,7 @@ class ApiClient {
     private token: string | null = null;
 
     constructor() {
-        this.baseUrl = import.meta.env?.VITE_API_BASE_URL || '/api/v1';
+        this.baseUrl = import.meta.env?.VITE_API_BASE_URL || 'https://mygarage.tnl.one/api/v1';
     }
 
     setToken(token: string | null) {
