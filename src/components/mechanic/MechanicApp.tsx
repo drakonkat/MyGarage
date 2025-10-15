@@ -1,26 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, CircularProgress, Alert, Button, List, ListItem, ListItemText, TextField } from '@mui/material';
+import { Container, Typography, Box, CircularProgress, Alert, Button, List, ListItem, ListItemText, Paper, ListItemIcon } from '@mui/material';
+import { PersonAdd } from '@mui/icons-material';
 import { observer } from 'mobx-react-lite';
 import Header from '../Header.tsx';
 import { useStores } from '../../stores/RootStore.ts';
 import { apiClient } from '../../ApiClient.ts';
+import { Client } from '../../types.ts';
 import CreateClientModal from './CreateClientModal.tsx';
-
-interface Client {
-    id: number;
-    email: string;
-    createdAt: string;
-}
 
 const MechanicApp: React.FC = observer(() => {
     const { userStore } = useStores();
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [clientEmail, setClientEmail] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
-    const [showCreateClientModal, setShowCreateClientModal] = useState(false);
-    const [emailForNewClient, setEmailForNewClient] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchClients = async () => {
         try {
@@ -41,31 +34,9 @@ const MechanicApp: React.FC = observer(() => {
         }
     }, [userStore.isLoggedIn]);
 
-    const handleAddClient = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsAdding(true);
-        setError(null);
-        try {
-            await apiClient.addClient(clientEmail);
-            setClientEmail('');
-            await fetchClients(); // Refresh client list
-        } catch(err: any) {
-            if (err.message && err.message.toLowerCase().includes("not found")) {
-                setEmailForNewClient(clientEmail);
-                setShowCreateClientModal(true);
-            } else {
-                setError(err.message || "Errore nell'aggiunta del cliente.");
-            }
-        } finally {
-            setIsAdding(false);
-        }
-    };
-
     const handleClientCreated = () => {
-        setShowCreateClientModal(false);
-        setClientEmail('');
-        setEmailForNewClient('');
-        fetchClients();
+        setIsModalOpen(false);
+        fetchClients(); // Ricarica la lista dopo la creazione
     };
 
 
@@ -73,53 +44,55 @@ const MechanicApp: React.FC = observer(() => {
         <>
             <Header />
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Typography variant="h4" gutterBottom>
-                    Dashboard Officina
-                </Typography>
-                
-                <Box component="form" onSubmit={handleAddClient} sx={{ display: 'flex', gap: 2, mb: 4, alignItems: 'center' }}>
-                     <TextField
-                        label="Email cliente da aggiungere o creare"
-                        variant="outlined"
-                        size="small"
-                        value={clientEmail}
-                        onChange={(e) => setClientEmail(e.target.value)}
-                        required
-                        type="email"
-                        sx={{flexGrow: 1}}
-                    />
-                    <Button type="submit" variant="contained" disabled={isAdding}>
-                        {isAdding ? <CircularProgress size={24} /> : 'Aggiungi'}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h4" gutterBottom>
+                        Dashboard Officina
+                    </Typography>
+                     <Button 
+                        variant="contained" 
+                        startIcon={<PersonAdd />}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Crea Nuovo Cliente
                     </Button>
                 </Box>
                 
                 {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>}
 
-                <Typography variant="h5" gutterBottom>
+                <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
                     I Miei Clienti
                 </Typography>
 
                 {loading ? (
                     <CircularProgress />
                 ) : (
-                    <List>
-                        {clients.length === 0 && <Typography>Nessun cliente trovato. Aggiungine uno per iniziare.</Typography>}
-                        {clients.map(client => (
-                            <ListItem key={client.id} divider>
-                                <ListItemText 
-                                    primary={client.email}
-                                    secondary={`Cliente dal: ${new Date(client.createdAt).toLocaleDateString()}`}
-                                />
-                            </ListItem>
-                        ))}
-                    </List>
+                    <Paper variant="outlined">
+                        <List>
+                            {clients.length === 0 && (
+                                <ListItem>
+                                    <ListItemText primary="Nessun cliente trovato." secondary="Aggiungine uno per iniziare a gestire i loro veicoli."/>
+                                </ListItem>
+                            )}
+                            {clients.map((client, index) => (
+                                <ListItem key={client.id} divider={index < clients.length - 1}>
+                                    <ListItemText 
+                                        primary={`${client.firstName} ${client.lastName}`}
+                                        secondary={client.email || client.phone || `Cliente dal: ${new Date(client.createdAt).toLocaleDateString()}`}
+                                    />
+                                     <Button variant="outlined" size="small">
+                                        Gestisci
+                                    </Button>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
                 )}
             </Container>
+            
             <CreateClientModal
-                open={showCreateClientModal}
-                onClose={() => setShowCreateClientModal(false)}
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
                 onClientCreated={handleClientCreated}
-                initialEmail={emailForNewClient}
             />
         </>
     );

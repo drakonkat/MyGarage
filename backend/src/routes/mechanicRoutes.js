@@ -8,14 +8,10 @@ const router = Router();
 router.use(isMechanic);
 
 // --- Client Management ---
-// Aggiungi un cliente esistente alla tua lista
-router.post('/clients', mechanicController.addClient);
-// Crea e aggiungi un nuovo cliente se non esiste
-router.post('/clients/create', mechanicController.createClient);
-// Ottieni la lista dei tuoi clienti
 router.get('/clients', mechanicController.getClients);
-// Ottieni i dettagli di un cliente specifico
+router.post('/clients', mechanicController.createClient);
 router.get('/clients/:clientId', mechanicController.getClientDetails);
+
 
 // --- Quote Management ---
 // Crea un nuovo preventivo per un cliente

@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import { AddCircle, YouTube, ShoppingCart, ExpandMore, Delete, AttachMoney, DeleteForever } from '@mui/icons-material';
 import { Car, MaintenanceRecord, ResourceLinks, Reminder } from '../types.ts';
-// Fix: Corrected import path for geminiApi to align with the project structure.
 import { geminiApi } from '../ApiClient.ts';
 
 interface CarDetailProps {
@@ -80,7 +79,6 @@ const CarDetail: React.FC<CarDetailProps> = ({
         }
     };
     
-    // Fix: By providing a typed initial value to `reduce`, we ensure TypeScript correctly infers the type of the resulting object.
     const maintenanceGroups = (car.maintenance || []).reduce((acc, record) => {
         const key = record.description;
         if (!acc[key]) {
@@ -249,7 +247,6 @@ const CarDetail: React.FC<CarDetailProps> = ({
                 {Object.entries(maintenanceGroups).map(([description, records]) => {
                     if (description === 'Veicolo aggiunto al sistema') return null;
 
-                    // Fix: Explicitly cast `records` as MaintenanceRecord[] to resolve a TypeScript type inference issue.
                     const typedRecords = records as MaintenanceRecord[];
                     const recommendation = typedRecords.find(r => r.isRecommendation);
                     const history = typedRecords.filter(r => !r.isRecommendation).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());

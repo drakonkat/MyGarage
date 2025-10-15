@@ -162,7 +162,12 @@ const Header: React.FC<HeaderProps> = observer(({
             </>
         ) : (
              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>Ciao, {user?.email}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                    <Typography sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>Ciao, {user?.email}</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                        v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'local-build'}
+                    </Typography>
+                </Box>
                 <Tooltip title="Logout">
                     <IconButton color="inherit" onClick={() => userStore.logout()}>
                         <Logout />

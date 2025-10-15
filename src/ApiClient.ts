@@ -9,7 +9,8 @@ import {
     AutoDocModelsResponse,
     AutoDocVehicleOption,
     AutoDocVehiclesResponse,
-    AnnualCostEstimate
+    AnnualCostEstimate,
+    Client
 } from './types.ts';
 
 // --- Gemini AI Setup ---
@@ -95,7 +96,6 @@ class ApiClient {
     private token: string | null = null;
 
     constructor() {
-        // Usa una variabile d'ambiente per l'URL di base dell'API, con un fallback a un percorso relativo per la produzione
         this.baseUrl = import.meta.env?.VITE_API_BASE_URL || '/api/v1';
     }
 
@@ -156,21 +156,20 @@ class ApiClient {
     // ... Altri metodi per l'utente personale (addCar, addMaintenance, etc.)
 
     // --- Mechanic ---
-    async getMyClients(): Promise<any[]> {
+    async getMyClients(): Promise<Client[]> {
         return this.request('/mechanic/clients');
     }
 
-    async addClient(clientEmail: string): Promise<any> {
+    async createClient(clientData: { 
+        firstName: string; 
+        lastName: string; 
+        phone?: string; 
+        email?: string; 
+        password?: string 
+    }): Promise<any> {
         return this.request('/mechanic/clients', {
             method: 'POST',
-            body: JSON.stringify({ clientEmail }),
-        });
-    }
-
-    async createClient(email: string, password: string): Promise<any> {
-        return this.request('/mechanic/clients/create', {
-            method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify(clientData),
         });
     }
     // ... Altri metodi per il meccanico

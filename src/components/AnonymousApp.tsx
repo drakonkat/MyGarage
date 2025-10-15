@@ -6,19 +6,19 @@ import {
   Alert,
 } from '@mui/material';
 
-import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from '../../types.ts';
+import { Car, MaintenanceRecord, KnownIssue, SimulationResultData, Reminder } from '../types.ts';
 import { geminiApi } from '../ApiClient.ts';
 import { getCarsFromDB, saveCarsToDB } from '../db.ts';
 
-import Header from '../../components/Header.tsx';
-import Dashboard from '../../components/Dashboard.tsx';
-import CarDetail from '../../components/CarDetail.tsx';
-import AddCarModal from '../../components/AddCarModal.tsx';
-import AddMaintenanceModal from '../../components/AddMaintenanceModal.tsx';
-import AddIssueModal from '../../components/AddIssueModal.tsx';
-import AddReminderModal from '../../components/AddReminderModal.tsx';
-import SimulationSetupModal from '../../components/SimulationSetupModal.tsx';
-import SimulationResultModal from '../../components/SimulationResultModal.tsx';
+import Header from './Header.tsx';
+import Dashboard from './Dashboard.tsx';
+import CarDetail from './CarDetail.tsx';
+import AddCarModal from './AddCarModal.tsx';
+import AddMaintenanceModal from './AddMaintenanceModal.tsx';
+import AddIssueModal from './AddIssueModal.tsx';
+import AddReminderModal from './AddReminderModal.tsx';
+import SimulationSetupModal from './SimulationSetupModal.tsx';
+import SimulationResultModal from './SimulationResultModal.tsx';
 
 
 function AnonymousApp() {
@@ -254,7 +254,6 @@ function AnonymousApp() {
   };
 
   const handleDeleteIssue = (issueId: string) => {
-      if (!selectedCar) return;
       if (!window.confirm("Sei sicuro di voler eliminare questo problema?")) return;
 
       const updatedCars = cars.map(car => {
@@ -336,7 +335,6 @@ function AnonymousApp() {
   };
 
   const handleDeleteReminder = (reminderId: string) => {
-      if (!selectedCar) return;
       if (!window.confirm("Sei sicuro di voler eliminare questa scadenza? Verrà eliminata anche la sua cronologia pagamenti.")) return;
 
       const updatedCars = cars.map(car => {

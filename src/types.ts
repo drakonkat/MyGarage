@@ -103,9 +103,21 @@ export interface SimulationResultData {
   targetMileage: number;
 }
 
-// Tipi per l'Utente
+// Tipi per l'Utente e il Cliente
 export interface User {
   id: number;
   email: string;
   role: 'personal' | 'mechanic';
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}
+
+export interface Client {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  createdAt: string;
 }

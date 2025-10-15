@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import db from '../database/models/index.js';
-const { User, Quote, Invoice, Car, MechanicClient } = db;
+const { User, Quote, Invoice, Car, Client } = db;
 
 // Funzione di utilità per generare numeri sequenziali
 async function generateNextNumber(model, field, prefix) {
@@ -18,72 +18,60 @@ async function generateNextNumber(model, field, prefix) {
 
 const mechanicController = {
     // --- Client Management ---
-    addClient: async (req, res) => {
-        const mechanicId = req.user.id;
-        const { clientEmail } = req.body;
-
-        try {
-            const client = await User.findOne({ where: { email: clientEmail } });
-            if (!client) {
-                return res.status(404).json({ message: "Cliente con questa email non trovato." });
-            }
-            if (client.id === mechanicId) {
-                return res.status(400).json({ message: "Non puoi aggiungere te stesso come cliente." });
-            }
-
-            const mechanic = await User.findByPk(mechanicId);
-            // Uso l'associazione `addClient` generata da Sequelize
-            await mechanic.addClient(client);
-
-            res.status(201).json({ message: "Cliente aggiunto con successo." });
-
-        } catch (error) {
-            if (error.name === 'SequelizeUniqueConstraintError') {
-                 return res.status(409).json({ message: 'Questo utente è già un tuo cliente.' });
-            }
-            console.error(error);
-            res.status(500).json({ message: "Errore nell'aggiunta del cliente." });
-        }
-    },
-    
     createClient: async (req, res) => {
         const mechanicId = req.user.id;
-        const { email, password } = req.body;
+        const { firstName, lastName, phone, email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email e password sono obbligatorie.' });
-        }
-
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) {
-            return res.status(409).json({ message: 'Un utente con questa email esiste già. Usa la funzione "Aggiungi Cliente" per associarlo.' });
+        if (!firstName || !lastName) {
+            return res.status(400).json({ message: 'Nome e cognome sono obbligatori.' });
         }
 
         const t = await db.sequelize.transaction();
 
         try {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const newClient = await User.create({
-                email,
-                password: hashedPassword,
-                role: 'personal',
-            }, { transaction: t });
-            
-            // L'associazione diretta tramite tabella di join
-            await MechanicClient.create({
-                mechanicId: mechanicId,
-                clientId: newClient.id
+            let newUserId = null;
+            // Se vengono forniti email e password, crea anche un account utente
+            if (email && password) {
+                const existingUser = await User.findOne({ where: { email } });
+                if (existingUser) {
+                    await t.rollback();
+                    return res.status(409).json({ message: 'Un utente con questa email esiste già.' });
+                }
+
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const newUser = await User.create({
+                    email,
+                    password: hashedPassword,
+                    role: 'personal',
+                    firstName,
+                    lastName,
+                    phone
+                }, { transaction: t });
+                newUserId = newUser.id;
+            }
+
+            // Crea il record del cliente
+            const newClient = await Client.create({
+                firstName,
+                lastName,
+                phone,
+                email, // Salva l'email anche qui per riferimento
+                mechanicId,
+                userId: newUserId,
             }, { transaction: t });
 
             await t.commit();
 
             res.status(201).json({ 
-                message: "Cliente creato e aggiunto con successo.",
-                client: { id: newClient.id, email: newClient.email }
+                message: "Cliente creato con successo.",
+                client: newClient
             });
 
         } catch (error) {
             await t.rollback();
+            if (error.name === 'SequelizeUniqueConstraintError') {
+                return res.status(409).json({ message: 'Un cliente con questa email esiste già.' });
+            }
             console.error('Errore nella creazione del cliente:', error);
             res.status(500).json({ message: 'Errore interno del server durante la creazione del cliente.' });
         }
@@ -92,15 +80,12 @@ const mechanicController = {
     getClients: async (req, res) => {
         const mechanicId = req.user.id;
         try {
-            const mechanic = await User.findByPk(mechanicId, {
-                include: {
-                    model: User,
-                    as: 'clients',
-                    attributes: ['id', 'email', 'createdAt'],
-                    through: { attributes: [] } // Non mostrare i dettagli della tabella di join
-                }
+            const clients = await Client.findAll({
+                where: { mechanicId },
+                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'createdAt'],
+                order: [['lastName', 'ASC'], ['firstName', 'ASC']]
             });
-            res.status(200).json(mechanic.clients);
+            res.status(200).json(clients);
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Errore nel recupero dei clienti." });
@@ -108,20 +93,16 @@ const mechanicController = {
     },
 
     getClientDetails: async(req, res) => {
-        const { clientId } = req.params;
+         const { clientId } = req.params;
+         const mechanicId = req.user.id;
          try {
-            const client = await User.findByPk(clientId, {
-                attributes: ['id', 'email'],
-                include: [{
-                    model: Car,
-                    as: 'cars',
-                    attributes: ['id', 'make', 'model', 'year']
-                }]
+            const client = await Client.findOne({
+                where: { id: clientId, mechanicId }, // Assicura che il meccanico possa vedere solo i suoi clienti
+                // TODO: Includere le auto associate al cliente
             });
             if (!client) {
-                return res.status(404).json({ message: "Cliente non trovato" });
+                return res.status(404).json({ message: "Cliente non trovato o non associato a questo account." });
             }
-            // Qui si potrebbe aggiungere un controllo per assicurarsi che il richiedente sia il meccanico di questo cliente
             res.status(200).json(client);
         } catch (error) {
             console.error(error);
@@ -137,7 +118,7 @@ const mechanicController = {
             const quoteNumber = await generateNextNumber(Quote, 'quoteNumber', 'PREV-');
             const quote = await Quote.create({
                 mechanicId,
-                clientId,
+                clientId, // Qui clientId si riferirà all'ID della tabella Client
                 carId,
                 quoteDate,
                 expiryDate,

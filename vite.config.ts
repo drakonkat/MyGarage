@@ -3,13 +3,17 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url';
 
-// Fix: __dirname is not available in ES modules. This defines it based on the current file location.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // Inietta la versione del software come una costante globale __APP_VERSION__.
+    // Usa la variabile d'ambiente APP_VERSION se disponibile, altrimenti usa '1.0-preview' come fallback.
+    '__APP_VERSION__': JSON.stringify(process.env.APP_VERSION || '1.0-preview')
+  },
   // Imposta il percorso di base sulla root ('/').
   // Questo è necessario perché l'app verrà servita dalla radice del dominio
   // dal server backend, e non più da percorsi relativi.

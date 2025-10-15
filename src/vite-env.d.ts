@@ -1,12 +1,17 @@
-// Fix: Replaced the non-working vite/client reference with a manual definition
-// of ImportMetaEnv to make Vite environment variables available to TypeScript.
-// This resolves errors related to `import.meta.env` and the missing type definition file.
-
+// Fix: Manually define types for import.meta.env to resolve type errors
+// when 'vite/client' types cannot be found. This makes the types available
+// globally for the project.
 interface ImportMetaEnv {
-  readonly VITE_GEMINI_API_KEY: string;
-  readonly VITE_API_BASE_URL: string;
+  readonly VITE_GEMINI_API_KEY?: string;
+  readonly VITE_API_BASE_URL?: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/**
+ * Dichiara una costante globale per la versione dell'app, iniettata da Vite.
+ * Questo approccio è più robusto rispetto a modificare `import.meta.env`.
+ */
+declare const __APP_VERSION__: string;
