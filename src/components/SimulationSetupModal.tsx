@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import { modalStyle } from '../theme.ts';
 import { Car, AutoDocMakerOption, AutoDocModelOption, AutoDocVehicleOption } from '../types.ts';
-import { externalApi } from '../ApiClient.ts';
+// Fix: Updated import from `externalApi` to `apiClient` to reflect the new API structure.
+import { apiClient } from '../ApiClient.ts';
 
 interface SimulationSetupModalProps {
     open: boolean;
@@ -49,7 +50,8 @@ const SimulationSetupModal: React.FC<SimulationSetupModalProps> = ({ open, onClo
                 setIsMakesLoading(true);
                 setError(null);
                 try {
-                    const makes = await externalApi.fetchMakes();
+                    // Fix: Replaced `externalApi` with `apiClient` to align with the current API client structure.
+                    const makes = await apiClient.fetchMakes();
                     setCarMakes(makes);
                 } catch (err) {
                     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -74,7 +76,8 @@ const SimulationSetupModal: React.FC<SimulationSetupModalProps> = ({ open, onClo
         setIsModelsLoading(true);
         setError(null);
         try {
-            const models = await externalApi.fetchModels(newValue.id);
+            // Fix: Replaced `externalApi` with `apiClient` to align with the current API client structure.
+            const models = await apiClient.fetchModels(newValue.id);
             setCarModels(models);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -94,7 +97,8 @@ const SimulationSetupModal: React.FC<SimulationSetupModalProps> = ({ open, onClo
         setIsVehiclesLoading(true);
         setError(null);
         try {
-            const vehicles = await externalApi.fetchVehicles(newValue.id);
+            // Fix: Replaced `externalApi` with `apiClient` to align with the current API client structure.
+            const vehicles = await apiClient.fetchVehicles(newValue.id);
             setCarVehicles(vehicles);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

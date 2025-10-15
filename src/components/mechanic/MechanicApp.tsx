@@ -6,6 +6,7 @@ import Header from '../Header.tsx';
 import { useStores } from '../../stores/RootStore.ts';
 import CreateClientModal from './CreateClientModal.tsx';
 import ClientList from './ClientList.tsx';
+import ClientDetailView from './ClientDetailView.tsx';
 import MechanicDashboard from './MechanicDashboard.tsx';
 import QuotesView from './QuotesView.tsx';
 import InvoicesView from './InvoicesView.tsx';
@@ -41,15 +42,39 @@ const MechanicApp: React.FC = observer(() => {
         mechanicStore.fetchAllData();
     }, [mechanicStore]);
 
+    useEffect(() => {
+      // Quando si torna alla lista clienti (deselezionando un cliente),
+      // assicurati che il tab "Clienti" sia attivo.
+      if (!mechanicStore.selectedClient && activeTab !== 1) {
+          // This logic might be too aggressive, let's see.
+          // Let's disable for now to avoid unwanted tab switching.
+      }
+    }, [mechanicStore.selectedClient, activeTab]);
+
     const handleClientCreated = () => {
         setIsClientModalOpen(false);
         mechanicStore.fetchClients(); // Ricarica solo i clienti dopo la creazione
         mechanicStore.fetchDashboardStats(); // Aggiorna anche le statistiche
+        setActiveTab(1); // Switch to clients tab after creation
     };
     
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
+        // Deseleziona il cliente se si cambia tab
+        if (newValue !== 1 && mechanicStore.selectedClient) {
+            mechanicStore.unselectClient();
+        }
     };
+
+    const renderClientTabContent = () => {
+      if (mechanicStore.isLoadingClients || mechanicStore.isLoadingClientDetails) {
+        return <CircularProgress sx={{ display: 'block', margin: '40px auto' }} />;
+      }
+      if (mechanicStore.selectedClient) {
+        return <ClientDetailView />;
+      }
+      return <ClientList />;
+    }
 
     const isLoading = mechanicStore.isLoadingClients || mechanicStore.isLoadingStats || mechanicStore.isLoadingQuotes || mechanicStore.isLoadingInvoices;
 
@@ -79,22 +104,19 @@ const MechanicApp: React.FC = observer(() => {
                     </Tabs>
                 </Box>
                 
-                {isLoading && activeTab === 0 ? <CircularProgress sx={{ display: 'block', margin: '40px auto' }} /> : (
-                    <>
-                        <TabPanel value={activeTab} index={0}>
-                           <MechanicDashboard />
-                        </TabPanel>
-                        <TabPanel value={activeTab} index={1}>
-                            <ClientList />
-                        </TabPanel>
-                        <TabPanel value={activeTab} index={2}>
-                            <QuotesView />
-                        </TabPanel>
-                         <TabPanel value={activeTab} index={3}>
-                            <InvoicesView />
-                        </TabPanel>
-                    </>
-                )}
+                
+                <TabPanel value={activeTab} index={0}>
+                    {mechanicStore.isLoadingStats ? <CircularProgress sx={{ display: 'block', margin: '40px auto' }} /> : <MechanicDashboard />}
+                </TabPanel>
+                <TabPanel value={activeTab} index={1}>
+                    {renderClientTabContent()}
+                </TabPanel>
+                <TabPanel value={activeTab} index={2}>
+                    <QuotesView />
+                </TabPanel>
+                    <TabPanel value={activeTab} index={3}>
+                    <InvoicesView />
+                </TabPanel>
 
             </Container>
             

@@ -18,6 +18,7 @@ import {
     Checkbox,
     IconButton,
     ListItemIcon,
+    Chip,
 } from '@mui/material';
 import { AddCircle, YouTube, ShoppingCart, ExpandMore, Delete, AttachMoney, DeleteForever } from '@mui/icons-material';
 import { Car, MaintenanceRecord, ResourceLinks, Reminder } from '../types.ts';
@@ -94,10 +95,13 @@ const CarDetail: React.FC<CarDetailProps> = ({
             <Button onClick={() => { onBack(); setResourceLinks(null); }}>
                 &larr; Torna alla Dashboard
             </Button>
-            <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
-                {car.year} {car.make} {car.model}
-            </Typography>
-             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mt: 2}}>
+                <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mb: 0 }}>
+                    {car.year} {car.make} {car.model}
+                </Typography>
+                {car.licensePlate && <Chip label={car.licensePlate} variant="outlined"/>}
+            </Box>
+             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 2 }}>
                 <Button
                     variant="contained"
                     startIcon={<AddCircle />}

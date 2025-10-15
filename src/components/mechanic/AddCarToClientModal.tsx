@@ -1,31 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Modal,
-    Box,
-    Typography,
-    TextField,
-    Button,
-    Autocomplete,
-    CircularProgress,
-    FormControlLabel,
-    Switch,
-    Stack,
-    InputAdornment,
-    IconButton
+    Modal, Box, Typography, TextField, Button, CircularProgress, Alert, Stack,
+    Autocomplete, FormControlLabel, Switch, InputAdornment, IconButton
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
-import { modalStyle } from '../theme.ts';
-import { AutoDocMakerOption, AutoDocModelOption, AutoDocVehicleOption } from '../types.ts';
-import { apiClient } from '../ApiClient.ts';
+import { observer } from 'mobx-react-lite';
+import { useStores } from '../../stores/RootStore.ts';
+import { AutoDocMakerOption, AutoDocModelOption, AutoDocVehicleOption } from '../../types.ts';
+import { apiClient } from '../../ApiClient.ts';
 
-interface AddCarModalProps {
+interface AddCarToClientModalProps {
     open: boolean;
     onClose: () => void;
-    onAddCar: (carData: { make: string; model: string; year: string; mileage: string; licensePlate: string; }) => void;
-    setError: (message: string | null) => void;
+    onCarAdded: () => void;
 }
 
-const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setError }) => {
+const modalStyleSx = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: { xs: '90%', sm: 450 },
+  bgcolor: 'background.paper',
+  borderRadius: 2,
+  boxShadow: 24,
+  p: 4,
+  maxHeight: '90vh',
+  overflowY: 'auto',
+};
+
+const AddCarToClientModal: React.FC<AddCarToClientModalProps> = observer(({ open, onClose, onCarAdded }) => {
+    const { mechanicStore } = useStores();
     const [isManual, setIsManual] = useState(false);
 
     // State for API-driven fields
@@ -50,7 +55,9 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
     const [isModelsLoading, setIsModelsLoading] = useState(false);
     const [isVehiclesLoading, setIsVehiclesLoading] = useState(false);
     const [isSearchingByPlate, setIsSearchingByPlate] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (open && !isManual && carMakes.length === 0) {
@@ -60,24 +67,22 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                 try {
                     const makes = await apiClient.fetchMakes();
                     setCarMakes(makes);
-                } catch (err) {
-                    const errorMessage = err instanceof Error ? err.message : String(err);
-                    setError(`Impossibile caricare le marche delle auto: ${errorMessage}`);
+                } catch (err: any) {
+                    setError(`Impossibile caricare le marche: ${err.message}`);
                 } finally {
                     setIsMakesLoading(false);
                 }
             };
             loadMakes();
         }
-    }, [open, isManual, setError, carMakes.length]);
-    
+    }, [open, isManual, carMakes.length]);
+
     const handleMakeChange = async (_event: React.SyntheticEvent, newValue: AutoDocMakerOption | null) => {
         setSelectedMake(newValue);
         setSelectedModel(null);
         setCarModels([]);
         setSelectedVehicle(null);
         setCarVehicles([]);
-        
         if (!newValue) return;
 
         setIsModelsLoading(true);
@@ -85,9 +90,8 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
         try {
             const models = await apiClient.fetchModels(newValue.id);
             setCarModels(models);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            setError(`Impossibile caricare i modelli per ${newValue.name}: ${errorMessage}`);
+        } catch (err: any) {
+            setError(`Impossibile caricare i modelli: ${err.message}`);
         } finally {
             setIsModelsLoading(false);
         }
@@ -97,7 +101,6 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
         setSelectedModel(newValue);
         setSelectedVehicle(null);
         setCarVehicles([]);
-        
         if (!newValue) return;
 
         setIsVehiclesLoading(true);
@@ -105,9 +108,8 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
         try {
             const vehicles = await apiClient.fetchVehicles(newValue.id);
             setCarVehicles(vehicles);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            setError(`Impossibile caricare le motorizzazioni per ${newValue.name}: ${errorMessage}`);
+        } catch (err: any) {
+            setError(`Impossibile caricare le motorizzazioni: ${err.message}`);
         } finally {
             setIsVehiclesLoading(false);
         }
@@ -122,11 +124,9 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
         setError(null);
         try {
             const result = await apiClient.searchByPlate(licensePlate);
-            // La risposta attesa da AutoDoc ha una prop 'tree' con [makerId, modelId, vehicleId]
             if (result && result.tree && Array.isArray(result.tree) && result.tree.length >= 3) {
                 const [makerId, modelId, vehicleId] = result.tree;
 
-                // Step 1: Carica (se necessario) e trova la marca
                 let currentMakes = carMakes;
                 if (currentMakes.length === 0) {
                     setIsMakesLoading(true);
@@ -135,10 +135,9 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                     setIsMakesLoading(false);
                 }
                 const foundMake = currentMakes.find(m => m.id === makerId);
-                if (!foundMake) throw new Error("Marca non trovata nel database.");
+                if (!foundMake) throw new Error("Marca non trovata.");
                 setSelectedMake(foundMake);
                 
-                // Step 2: Carica e trova il modello
                 setIsModelsLoading(true);
                 const models = await apiClient.fetchModels(makerId);
                 setCarModels(models);
@@ -147,7 +146,6 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                 if (!foundModel) throw new Error("Modello non trovato.");
                 setSelectedModel(foundModel);
 
-                // Step 3: Carica e trova la motorizzazione
                 setIsVehiclesLoading(true);
                 const vehicles = await apiClient.fetchVehicles(modelId);
                 setCarVehicles(vehicles);
@@ -156,7 +154,6 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                 if (!foundVehicle) throw new Error("Motorizzazione non trovata.");
                 setSelectedVehicle(foundVehicle);
                 
-                // Il selettore manuale viene disattivato
                 setIsManual(false);
 
             } else {
@@ -169,7 +166,6 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
             setIsSearchingByPlate(false);
         }
     };
-
 
     const resetForm = () => {
         setIsManual(false);
@@ -184,49 +180,56 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
         setSelectedYear('');
         setCurrentMileage('');
         setError(null);
-    }
+        setLoading(false);
+    };
 
-    const handleClose = () => {
-        resetForm();
-        onClose();
-    }
+    const handleClose = () => { if (!loading) { resetForm(); onClose(); } };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+
         const carData = {
             make: isManual ? manualMake : selectedMake!.name,
             model: isManual ? manualModel : `${selectedModel!.name} ${selectedVehicle!.name}`,
             year: selectedYear,
             mileage: currentMileage,
-            licensePlate: licensePlate,
+            licensePlate,
         };
-        setIsSubmitting(true);
-        await onAddCar(carData);
-        setIsSubmitting(false);
-        handleClose();
+
+        try {
+            await mechanicStore.addCarToClient(carData);
+            onCarAdded();
+        } catch (err: any) {
+            setError(err.message || "Errore sconosciuto.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const isSubmitDisabled = isManual
-        ? !manualMake || !manualModel || !selectedYear || !currentMileage || isSubmitting
-        : !selectedMake || !selectedModel || !selectedVehicle || !selectedYear || !currentMileage || isSubmitting;
+        ? !manualMake || !manualModel || !selectedYear || !currentMileage || loading
+        : !selectedMake || !selectedModel || !selectedVehicle || !selectedYear || !currentMileage || loading;
 
     return (
         <Modal open={open} onClose={handleClose}>
-            <Box sx={modalStyle}>
-                <Typography variant="h6" component="h2">Aggiungi una Nuova Auto</Typography>
-                
-                <FormControlLabel
+            <Box sx={modalStyleSx} component="form" onSubmit={handleSubmit}>
+                <Typography variant="h6" component="h2">
+                    Aggiungi Veicolo a {mechanicStore.selectedClient?.firstName} {mechanicStore.selectedClient?.lastName}
+                </Typography>
+                 <FormControlLabel
                     control={<Switch checked={isManual} onChange={(e) => setIsManual(e.target.checked)} />}
                     label="Inserisci manualmente"
-                    sx={{ mb: 1 }}
+                    sx={{ my: 1 }}
                 />
-
-                <Stack spacing={2} sx={{mt: 1}}>
-                     <TextField
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                    <TextField
                         label="Targa"
-                        fullWidth
                         value={licensePlate}
                         onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
-                        inputProps={{ style: { textTransform: 'uppercase' } }}
+                        fullWidth
+                        inputProps={{ style: { textTransform: 'uppercase' }}}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
@@ -237,21 +240,10 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                             )
                         }}
                     />
-
                     {isManual ? (
                         <>
-                            <TextField 
-                                label="Marca (es. DeLorean)" 
-                                value={manualMake}
-                                onChange={(e) => setManualMake(e.target.value)}
-                                fullWidth
-                            />
-                            <TextField 
-                                label="Modello (es. DMC-12)" 
-                                value={manualModel}
-                                onChange={(e) => setManualModel(e.target.value)}
-                                fullWidth
-                            />
+                            <TextField label="Marca" value={manualMake} onChange={(e) => setManualMake(e.target.value)} required fullWidth />
+                            <TextField label="Modello" value={manualModel} onChange={(e) => setManualModel(e.target.value)} required fullWidth />
                         </>
                     ) : (
                         <>
@@ -262,21 +254,7 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                                 getOptionLabel={(option) => option.name}
                                 isOptionEqualToValue={(option, value) => option.id === value.id}
                                 onChange={handleMakeChange}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Seleziona Marca"
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            endAdornment: (
-                                                <>
-                                                    {isMakesLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                    {params.InputProps.endAdornment}
-                                                </>
-                                            ),
-                                        }}
-                                    />
-                                )}
+                                renderInput={(params) => <TextField {...params} label="Seleziona Marca" InputProps={{...params.InputProps, endAdornment: <>{isMakesLoading ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>}} />}
                             />
                             <Autocomplete
                                 disabled={!selectedMake || isModelsLoading}
@@ -286,21 +264,7 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                                 getOptionLabel={(option) => option.name}
                                 isOptionEqualToValue={(option, value) => option.id === value.id}
                                 onChange={handleModelChange}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Seleziona Modello"
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            endAdornment: (
-                                                <>
-                                                    {isModelsLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                    {params.InputProps.endAdornment}
-                                                </>
-                                            ),
-                                        }}
-                                    />
-                                )}
+                                renderInput={(params) => <TextField {...params} label="Seleziona Modello" InputProps={{...params.InputProps, endAdornment: <>{isModelsLoading ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>}} />}
                             />
                             <Autocomplete
                                 disabled={!selectedModel || isVehiclesLoading}
@@ -310,53 +274,22 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
                                 getOptionLabel={(option) => option.name}
                                 isOptionEqualToValue={(option, value) => option.id === value.id}
                                 onChange={(_event, newValue) => setSelectedVehicle(newValue)}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Seleziona Motorizzazione"
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            endAdornment: (
-                                                <>
-                                                    {isVehiclesLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                    {params.InputProps.endAdornment}
-                                                </>
-                                            ),
-                                        }}
-                                    />
-                                )}
+                                renderInput={(params) => <TextField {...params} label="Seleziona Motorizzazione" InputProps={{...params.InputProps, endAdornment: <>{isVehiclesLoading ? <CircularProgress color="inherit" size={20} /> : null}{params.InputProps.endAdornment}</>}} />}
                             />
                         </>
                     )}
+                    <TextField label="Anno" type="number" value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} required fullWidth />
+                    <TextField label="Chilometraggio (km)" type="number" value={currentMileage} onChange={(e) => setCurrentMileage(e.target.value)} required fullWidth />
                     
-                    <TextField
-                        label="Anno"
-                        type="number"
-                        fullWidth
-                        required
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                    />
-                     <TextField
-                        label="Chilometraggio attuale (km)"
-                        type="number"
-                        fullWidth
-                        required
-                        value={currentMileage}
-                        onChange={(e) => setCurrentMileage(e.target.value)}
-                    />
-                    <Button
-                        onClick={handleSubmit}
-                        variant="contained"
-                        sx={{ mt: 2 }}
-                        disabled={isSubmitDisabled}
-                    >
-                        {isSubmitting ? <CircularProgress size={24} /> : "Aggiungi Auto"}
+                    {error && <Alert severity="error">{error}</Alert>}
+
+                    <Button type="submit" variant="contained" disabled={isSubmitDisabled} sx={{ mt: 2 }}>
+                        {loading ? <CircularProgress size={24} /> : 'Aggiungi Veicolo'}
                     </Button>
                 </Stack>
             </Box>
         </Modal>
     );
-};
+});
 
-export default AddCarModal;
+export default AddCarToClientModal;

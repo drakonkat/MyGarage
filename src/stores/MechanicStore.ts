@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { RootStore } from './RootStore.ts';
 import { apiClient } from '../ApiClient.ts';
-import { Client, Quote, Invoice, MechanicDashboardStats } from '../types.ts';
+import { Client, Quote, Invoice, MechanicDashboardStats, Car } from '../types.ts';
 
 const initialDashboardStats: MechanicDashboardStats = {
     clientCount: 0,
@@ -17,6 +17,9 @@ export class MechanicStore {
   quotes: Quote[] = [];
   invoices: Invoice[] = [];
   dashboardStats: MechanicDashboardStats = initialDashboardStats;
+
+  selectedClient: Client | null = null;
+  isLoadingClientDetails: boolean = false;
 
   isLoadingClients: boolean = false;
   isLoadingQuotes: boolean = false;
@@ -54,6 +57,45 @@ export class MechanicStore {
       runInAction(() => {
         this.isLoadingClients = false;
       });
+    }
+  };
+
+  selectClient = async (clientId: number) => {
+    this.isLoadingClientDetails = true;
+    this.error = null;
+    try {
+      const clientDetails = await apiClient.getClientDetails(clientId);
+      runInAction(() => {
+        this.selectedClient = clientDetails;
+      });
+    } catch (err: any) {
+      runInAction(() => {
+        this.error = err.message || "Impossibile caricare i dettagli del cliente.";
+        this.selectedClient = null; // Reset on error
+      });
+    } finally {
+      runInAction(() => {
+        this.isLoadingClientDetails = false;
+      });
+    }
+  };
+
+  unselectClient = () => {
+    this.selectedClient = null;
+  };
+  
+  addCarToClient = async (carData: { make: string; model: string; year: string; mileage: string; licensePlate?: string; }) => {
+    if (!this.selectedClient) return;
+    this.error = null;
+    try {
+      await apiClient.addCarToClient(this.selectedClient.id, carData);
+      // Refresh client data
+      await this.selectClient(this.selectedClient.id);
+    } catch (err: any) {
+      runInAction(() => {
+        this.error = err.message || "Impossibile aggiungere il veicolo.";
+      });
+      throw err; // re-throw to be caught in modal
     }
   };
   

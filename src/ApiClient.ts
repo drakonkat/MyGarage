@@ -4,11 +4,8 @@ import {
     ResourceLinks,
     Car,
     AutoDocMakerOption,
-    AutoDocMakersResponse,
     AutoDocModelOption,
-    AutoDocModelsResponse,
     AutoDocVehicleOption,
-    AutoDocVehiclesResponse,
     AnnualCostEstimate,
     Client,
     Quote,
@@ -151,6 +148,27 @@ class ApiClient {
         });
     }
 
+    // --- Vehicle Data (for Autocompletes) ---
+    async fetchMakes(): Promise<AutoDocMakerOption[]> {
+        return this.request('/vehicles/makes');
+    }
+
+    async fetchModels(makeId: number): Promise<AutoDocModelOption[]> {
+        return this.request(`/vehicles/models/${makeId}`);
+    }
+
+    async fetchVehicles(modelId: number): Promise<AutoDocVehicleOption[]> {
+        return this.request(`/vehicles/vehicles/${modelId}`);
+    }
+
+    async searchByPlate(licensePlate: string): Promise<any> {
+        return this.request('/vehicles/search-by-plate', {
+            method: 'POST',
+            body: JSON.stringify({ licensePlate }),
+        });
+    }
+
+
     // --- Personal User ---
     async getMyCars(): Promise<Car[]> {
         return this.request('/client/cars');
@@ -161,6 +179,17 @@ class ApiClient {
     // --- Mechanic ---
     async getMyClients(): Promise<Client[]> {
         return this.request('/mechanic/clients');
+    }
+
+    async getClientDetails(clientId: number): Promise<Client> {
+        return this.request(`/mechanic/clients/${clientId}`);
+    }
+
+    async addCarToClient(clientId: number, carData: { make: string; model: string; year: string; mileage: string; licensePlate?: string; }): Promise<Car> {
+        return this.request(`/mechanic/clients/${clientId}/cars`, {
+            method: 'POST',
+            body: JSON.stringify(carData),
+        });
     }
 
     async createClient(clientData: { 
@@ -206,91 +235,7 @@ class ApiClient {
 export const apiClient = new ApiClient();
 
 
-// --- External and Gemini APIs (kept separate for clarity) ---
-
-const CACHE_DURATION = 24 * 60 * 60 * 1000;
-
-interface CacheItem<T> {
-    timestamp: number;
-    data: T;
-}
-
-const cache = {
-    get: <T>(key: string): T | null => {
-        const itemStr = localStorage.getItem(key);
-        if (!itemStr) return null;
-        try {
-            const item: CacheItem<T> = JSON.parse(itemStr);
-            if (new Date().getTime() - item.timestamp > CACHE_DURATION) {
-                localStorage.removeItem(key);
-                return null;
-            }
-            return item.data;
-        } catch (e) {
-            localStorage.removeItem(key);
-            return null;
-        }
-    },
-    set: <T>(key: string, value: T): void => {
-        try {
-            const item: CacheItem<T> = { timestamp: new Date().getTime(), data: value };
-            localStorage.setItem(key, JSON.stringify(item));
-        } catch (e) {
-            console.error(`Failed to set cache for key ${key}`, e);
-        }
-    }
-};
-
-export const externalApi = {
-    async fetchMakes(): Promise<AutoDocMakerOption[]> {
-        const cacheKey = 'autodoc-makes';
-        const cachedMakes = cache.get<AutoDocMakerOption[]>(cacheKey);
-        if (cachedMakes) return cachedMakes;
-
-        const targetUrl = 'https://www.auto-doc.it/ajax/selector/vehicle';
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data: AutoDocMakersResponse = await response.json();
-        
-        const allMakes = data.makers.flatMap(group => group.options);
-        const uniqueMakesMap = new Map<string, AutoDocMakerOption>();
-        allMakes.forEach(make => {
-            if (!uniqueMakesMap.has(make.name)) uniqueMakesMap.set(make.name, make);
-        });
-        const sortedMakes = [...uniqueMakesMap.values()].sort((a, b) => a.name.localeCompare(b.name));
-        cache.set(cacheKey, sortedMakes);
-        return sortedMakes;
-    },
-    async fetchModels(makerId: number): Promise<AutoDocModelOption[]> {
-        const cacheKey = `autodoc-models-${makerId}`;
-        const cachedModels = cache.get<AutoDocModelOption[]>(cacheKey);
-        if (cachedModels) return cachedModels;
-
-        const targetUrl = `https://www.auto-doc.it/ajax/selector/vehicle?maker=${makerId}&action=models`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Network response was not ok for fetching models');
-        const data: AutoDocModelsResponse = await response.json();
-        const sortedModels = data.models.flatMap(group => group.options).sort((a, b) => a.name.localeCompare(b.name));
-        cache.set(cacheKey, sortedModels);
-        return sortedModels;
-    },
-    async fetchVehicles(modelId: number): Promise<AutoDocVehicleOption[]> {
-        const cacheKey = `autodoc-vehicles-${modelId}`;
-        const cachedVehicles = cache.get<AutoDocVehicleOption[]>(cacheKey);
-        if (cachedVehicles) return cachedVehicles;
-
-        const targetUrl = `https://www.auto-doc.it/ajax/selector/vehicle?model=${modelId}&action=vehicles`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error('Network response was not ok for fetching vehicles');
-        const data: AutoDocVehiclesResponse = await response.json();
-        const sortedVehicles = data.vehicles.flatMap(group => group.options).sort((a, b) => a.name.localeCompare(b.name));
-        cache.set(cacheKey, sortedVehicles);
-        return sortedVehicles;
-    },
-};
+// --- Gemini API (kept separate for clarity) ---
 
 export const geminiApi = {
     async fetchMaintenanceSchedule(make: string, model: string, year: number, currentMileage: number): Promise<MaintenanceRecord[]> {

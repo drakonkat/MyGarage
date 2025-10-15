@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, CardActions, Button, Box, Paper, List, ListItem, ListItemIcon, Avatar, ListItemText, Grid } from '@mui/material';
+import { Card, CardContent, Typography, CardActions, Button, Box, Paper, List, ListItem, ListItemIcon, Avatar, ListItemText, Grid, Chip } from '@mui/material';
 import { EventNote, Build, DirectionsCar, ErrorOutline, EuroSymbol } from '@mui/icons-material';
 import { Car } from '../types.ts';
 import DashboardCharts from './DashboardCharts.tsx';
@@ -112,9 +112,12 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
                             return (
                                 <Card variant="outlined" key={car.id}>
                                     <CardContent>
-                                        <Typography variant="h6" component="div" fontWeight="bold">
-                                            {car.year} {car.make} {car.model}
-                                        </Typography>
+                                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                                            <Typography variant="h6" component="div" fontWeight="bold">
+                                                {car.year} {car.make} {car.model}
+                                            </Typography>
+                                            {car.licensePlate && <Chip label={car.licensePlate} size="small" variant="outlined"/>}
+                                        </Box>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             Ultimo chilometraggio: {typeof latestMileage === 'number' ? latestMileage.toLocaleString() : latestMileage} km
                                         </Typography>

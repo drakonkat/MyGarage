@@ -16,7 +16,11 @@ export default (sequelize, DataTypes) => {
         as: 'userAccount',
       });
 
-      // TODO: Associare auto, preventivi, etc. al Client invece che direttamente all'User
+      // Un cliente può avere molte auto
+      Client.hasMany(models.Car, {
+        foreignKey: 'clientId',
+        as: 'cars',
+      });
     }
   }
   Client.init({

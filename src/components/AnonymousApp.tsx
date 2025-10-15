@@ -136,7 +136,7 @@ function AnonymousApp() {
     }
   };
 
-  const handleAddCar = (carData: { make: string; model: string; year: string; mileage: string }) => {
+  const handleAddCar = (carData: { make: string; model: string; year: string; mileage: string; licensePlate: string; }) => {
     setError(null);
     setModalOpen(false);
     
@@ -159,6 +159,7 @@ function AnonymousApp() {
       make: carData.make,
       model: carData.model,
       year,
+      licensePlate: carData.licensePlate,
       maintenance: [initialRecord],
       knownIssues: [],
       reminders: [],

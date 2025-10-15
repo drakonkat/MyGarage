@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
-import { Op, fn, col, literal } from 'sequelize';
+import { Op, fn, col } from 'sequelize';
 import db from '../database/models/index.js';
-const { User, Quote, Invoice, Car, Client } = db;
+const { User, Quote, Invoice, Car, Client, MaintenanceRecord } = db;
 
 // Funzione di utilità per generare numeri sequenziali
 async function generateNextNumber(model, field, prefix) {
@@ -40,7 +40,10 @@ const mechanicController = {
                 }
             });
 
-            // Semplice aggregazione mensile per l'anno corrente
+            const dialect = db.sequelize.getDialect();
+            const monthFormat = dialect === 'mysql' ? '%Y-%m' : 'YYYY-MM';
+            const monthFunction = dialect === 'mysql' ? 'DATE_FORMAT' : 'to_char';
+
             const monthlyRevenue = await Invoice.findAll({
                 where: {
                     mechanicId,
@@ -52,7 +55,7 @@ const mechanicController = {
                     }
                 },
                 attributes: [
-                    [fn('to_char', col('invoiceDate'), 'YYYY-MM'), 'month'],
+                    [fn(monthFunction, col('invoiceDate'), monthFormat), 'month'],
                     [fn('SUM', col('totalAmount')), 'revenue']
                 ],
                 group: ['month'],
@@ -167,15 +170,18 @@ const mechanicController = {
          try {
             const client = await Client.findOne({
                 where: { id: clientId, mechanicId }, // Assicura che il meccanico possa vedere solo i suoi clienti
-                 include: [{
-                    model: User,
-                    as: 'userAccount',
-                    attributes: ['id', 'email'],
-                    include: [{
+                include: [
+                    {
+                        model: User,
+                        as: 'userAccount',
+                        attributes: ['id', 'email'],
+                        required: false,
+                    },
+                    {
                         model: Car,
-                        as: 'cars'
-                    }]
-                }]
+                        as: 'cars',
+                    }
+                ]
             });
             if (!client) {
                 return res.status(404).json({ message: "Cliente non trovato o non associato a questo account." });
@@ -186,6 +192,58 @@ const mechanicController = {
             res.status(500).json({ message: "Errore nel recupero dei dettagli del cliente." });
         }
     },
+    
+    createCarForClient: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { clientId } = req.params;
+        const { make, model, year, mileage, licensePlate } = req.body;
+
+        if (!make || !model || !year || !mileage) {
+            return res.status(400).json({ message: 'Dati del veicolo incompleti.' });
+        }
+
+        const t = await db.sequelize.transaction();
+
+        try {
+            const client = await Client.findOne({
+                where: { id: clientId, mechanicId },
+                transaction: t,
+            });
+
+            if (!client) {
+                await t.rollback();
+                return res.status(404).json({ message: 'Cliente non trovato.' });
+            }
+
+            const newCar = await Car.create({
+                make,
+                model,
+                year: parseInt(year, 10),
+                licensePlate: licensePlate || null,
+                ownerId: client.userId || null, // Link user if they exist
+                clientId: client.id, // Always link to the client record
+            }, { transaction: t });
+
+            await MaintenanceRecord.create({
+                date: new Date().toISOString().split('T')[0],
+                mileage: parseInt(mileage, 10),
+                description: 'Veicolo aggiunto al sistema',
+                cost: 0,
+                notes: 'Chilometraggio iniziale al momento dell\'aggiunta da parte del meccanico.',
+                carId: newCar.id
+            }, { transaction: t });
+
+            await t.commit();
+
+            res.status(201).json(newCar);
+
+        } catch (error) {
+            await t.rollback();
+            console.error('Errore nella creazione del veicolo per il cliente:', error);
+            res.status(500).json({ message: 'Errore interno del server.' });
+        }
+    },
+
 
     // --- Quote & Invoice Management ---
     createQuote: async (req, res) => {

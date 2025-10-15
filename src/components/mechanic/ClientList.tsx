@@ -1,5 +1,5 @@
 import React from 'react';
-import { List, ListItem, ListItemText, Paper, Typography, Box } from '@mui/material';
+import { List, ListItemText, Paper, Typography, Box, ListItemButton } from '@mui/material';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../../stores/RootStore.ts';
 
@@ -20,9 +20,10 @@ const ClientList: React.FC = observer(() => {
         <Paper variant="outlined">
             <List disablePadding>
                 {clients.map((client, index) => (
-                    <ListItem 
+                    <ListItemButton 
                         key={client.id} 
                         divider={index < clients.length - 1}
+                        onClick={() => mechanicStore.selectClient(client.id)}
                     >
                         <ListItemText 
                             primary={`${client.firstName} ${client.lastName}`}
@@ -37,7 +38,7 @@ const ClientList: React.FC = observer(() => {
                                 </Box>
                             }
                         />
-                    </ListItem>
+                    </ListItemButton>
                 ))}
             </List>
         </Paper>

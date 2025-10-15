@@ -35,6 +35,7 @@ export interface Car {
   make: string;
   model: string;
   year: number;
+  licensePlate?: string;
   ownerId?: number; // L'ID del proprietario (User)
   maintenance: MaintenanceRecord[];
   knownIssues?: KnownIssue[];

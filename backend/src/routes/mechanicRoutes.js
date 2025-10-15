@@ -14,6 +14,7 @@ router.get('/dashboard-stats', mechanicController.getDashboardStats);
 router.get('/clients', mechanicController.getClients);
 router.post('/clients', mechanicController.createClient);
 router.get('/clients/:clientId', mechanicController.getClientDetails);
+router.post('/clients/:clientId/cars', mechanicController.createCarForClient);
 
 
 // --- Quote Management ---

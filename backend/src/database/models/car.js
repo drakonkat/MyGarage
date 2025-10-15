@@ -8,6 +8,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'ownerId',
         as: 'owner',
       });
+      Car.belongsTo(models.Client, {
+        foreignKey: 'clientId',
+        as: 'client',
+      });
       Car.hasMany(models.MaintenanceRecord, {
         foreignKey: 'carId',
         as: 'maintenance',
@@ -40,7 +44,15 @@ export default (sequelize, DataTypes) => {
     make: DataTypes.STRING,
     model: DataTypes.STRING,
     year: DataTypes.INTEGER,
-    ownerId: DataTypes.INTEGER
+    licensePlate: DataTypes.STRING,
+    ownerId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    clientId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    }
   }, {
     sequelize,
     modelName: 'Car',

@@ -3,12 +3,16 @@ import authController from '../controllers/authController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import mechanicRoutes from './mechanicRoutes.js';
 import clientRoutes from './clientRoutes.js';
+import vehicleRoutes from './vehicleRoutes.js';
 
 const router = Router();
 
 // Auth routes
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
+
+// Vehicle data routes (for autocompletes)
+router.use('/vehicles', authMiddleware, vehicleRoutes);
 
 // Mechanic routes (protected)
 router.use('/mechanic', authMiddleware, mechanicRoutes);
