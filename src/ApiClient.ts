@@ -224,6 +224,20 @@ class ApiClient {
         });
     }
 
+    // --- Maintenance ---
+    async addMaintenanceRecordToCar(carId: string, recordData: Omit<MaintenanceRecord, 'id' | 'carId'>): Promise<MaintenanceRecord> {
+        return this.request(`/mechanic/cars/${carId}/maintenance`, {
+            method: 'POST',
+            body: JSON.stringify(recordData),
+        });
+    }
+
+    async deleteMaintenanceRecord(recordId: string): Promise<void> {
+        return this.request(`/mechanic/maintenance/${recordId}`, {
+            method: 'DELETE',
+        });
+    }
+
     // --- Inventory ---
     async getInventoryItems(): Promise<InventoryItem[]> {
         return this.request('/mechanic/inventory');

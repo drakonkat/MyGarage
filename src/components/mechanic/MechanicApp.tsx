@@ -11,6 +11,7 @@ import MechanicDashboard from './MechanicDashboard.tsx';
 import QuotesView from './QuotesView.tsx';
 import InvoicesView from './InvoicesView.tsx';
 import InventoryView from './InventoryView.tsx';
+import MechanicCarDetailView from './MechanicCarDetailView.tsx';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -70,6 +71,9 @@ const MechanicApp: React.FC = observer(() => {
     const renderClientTabContent = () => {
       if (mechanicStore.isLoadingClients || mechanicStore.isLoadingClientDetails) {
         return <CircularProgress sx={{ display: 'block', margin: '40px auto' }} />;
+      }
+      if (mechanicStore.selectedCar) {
+        return <MechanicCarDetailView />;
       }
       if (mechanicStore.selectedClient) {
         return <ClientDetailView />;

@@ -57,8 +57,8 @@ const ClientDetailView: React.FC = observer(() => {
                                 </Stack>
                             </CardContent>
                             <CardActions>
-                                <Button size="small" disabled>
-                                    Visualizza Dettagli (Prossimamente)
+                                <Button size="small" onClick={() => mechanicStore.selectCar(car)}>
+                                    Gestisci Veicolo
                                 </Button>
                             </CardActions>
                         </Card>

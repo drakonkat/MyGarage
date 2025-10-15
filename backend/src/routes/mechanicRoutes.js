@@ -16,6 +16,10 @@ router.post('/clients', mechanicController.createClient);
 router.get('/clients/:clientId', mechanicController.getClientDetails);
 router.post('/clients/:clientId/cars', mechanicController.createCarForClient);
 
+// --- Maintenance Management ---
+router.post('/cars/:carId/maintenance', mechanicController.addMaintenanceRecordToCar);
+router.delete('/maintenance/:recordId', mechanicController.deleteMaintenanceRecord);
+
 
 // --- Quote Management ---
 router.post('/quotes', mechanicController.createQuote);

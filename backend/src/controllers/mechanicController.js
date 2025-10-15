@@ -180,7 +180,15 @@ const mechanicController = {
                     {
                         model: Car,
                         as: 'cars',
+                        include: [{
+                            model: MaintenanceRecord,
+                            as: 'maintenance'
+                        }]
                     }
+                ],
+                order: [
+                    [{ model: Car, as: 'cars' }, 'year', 'DESC'],
+                    [{ model: Car, as: 'cars' }, { model: MaintenanceRecord, as: 'maintenance' }, 'mileage', 'DESC']
                 ]
             });
             if (!client) {
@@ -240,6 +248,70 @@ const mechanicController = {
         } catch (error) {
             await t.rollback();
             console.error('Errore nella creazione del veicolo per il cliente:', error);
+            res.status(500).json({ message: 'Errore interno del server.' });
+        }
+    },
+
+    addMaintenanceRecordToCar: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { carId } = req.params;
+        const { date, mileage, description, cost, notes } = req.body;
+
+        if (!date || !mileage || !description || cost === undefined) {
+            return res.status(400).json({ message: 'Dati di manutenzione incompleti.' });
+        }
+
+        try {
+            // Security check: verify the car belongs to a client of this mechanic
+            const car = await Car.findByPk(carId, {
+                include: [{ model: Client, as: 'client', attributes: ['mechanicId'] }]
+            });
+
+            if (!car || car.client.mechanicId !== mechanicId) {
+                return res.status(404).json({ message: 'Veicolo non trovato o non autorizzato.' });
+            }
+
+            const newRecord = await MaintenanceRecord.create({
+                carId,
+                date,
+                mileage: parseInt(mileage, 10),
+                description,
+                cost: parseFloat(cost),
+                notes,
+                isRecommendation: false, // Mechanic is logging real work
+            });
+
+            res.status(201).json(newRecord);
+
+        } catch (error) {
+            console.error('Errore nell\'aggiunta del record di manutenzione:', error);
+            res.status(500).json({ message: 'Errore interno del server.' });
+        }
+    },
+
+    deleteMaintenanceRecord: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { recordId } = req.params;
+
+        try {
+            // Security check: verify the record belongs to a car of a client of this mechanic
+            const record = await MaintenanceRecord.findByPk(recordId, {
+                include: [{
+                    model: Car,
+                    as: 'car',
+                    include: [{ model: Client, as: 'client', attributes: ['mechanicId'] }]
+                }]
+            });
+
+            if (!record || record.car.client.mechanicId !== mechanicId) {
+                return res.status(404).json({ message: 'Record non trovato o non autorizzato.' });
+            }
+            
+            await record.destroy();
+            res.status(204).send();
+
+        } catch (error) {
+            console.error('Errore nell\'eliminazione del record di manutenzione:', error);
             res.status(500).json({ message: 'Errore interno del server.' });
         }
     },

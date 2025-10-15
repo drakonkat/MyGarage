@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { RootStore } from './RootStore.ts';
 import { apiClient } from '../ApiClient.ts';
-import { Client, Quote, Invoice, MechanicDashboardStats, InventoryItem } from '../types.ts';
+import { Client, Quote, Invoice, MechanicDashboardStats, InventoryItem, Car, MaintenanceRecord } from '../types.ts';
 
 const initialDashboardStats: MechanicDashboardStats = {
     clientCount: 0,
@@ -20,6 +20,7 @@ export class MechanicStore {
   dashboardStats: MechanicDashboardStats = initialDashboardStats;
 
   selectedClient: Client | null = null;
+  selectedCar: Car | null = null;
   isLoadingClientDetails: boolean = false;
 
   isLoadingClients: boolean = false;
@@ -70,6 +71,9 @@ export class MechanicStore {
       const clientDetails = await apiClient.getClientDetails(clientId);
       runInAction(() => {
         this.selectedClient = clientDetails;
+         if (this.selectedCar) {
+            this.selectedCar = clientDetails.cars?.find(c => c.id === this.selectedCar!.id) || null;
+        }
       });
     } catch (err: any) {
       runInAction(() => {
@@ -85,6 +89,15 @@ export class MechanicStore {
 
   unselectClient = () => {
     this.selectedClient = null;
+    this.selectedCar = null;
+  };
+
+  selectCar = (car: Car) => {
+    this.selectedCar = car;
+  };
+
+  unselectCar = () => {
+    this.selectedCar = null;
   };
   
   addCarToClient = async (carData: { make: string; model: string; year: string; mileage: string; licensePlate?: string; }) => {
@@ -100,6 +113,32 @@ export class MechanicStore {
       });
       throw err; // re-throw to be caught in modal
     }
+  };
+
+  addMaintenanceRecord = async (carId: string, recordData: Omit<MaintenanceRecord, 'id' | 'carId'>) => {
+    if (!this.selectedClient) return;
+    try {
+        await apiClient.addMaintenanceRecordToCar(carId, recordData);
+        await this.selectClient(this.selectedClient.id);
+    } catch (err: any) {
+        runInAction(() => {
+            this.error = err.message || "Impossibile aggiungere il record di manutenzione.";
+        });
+        throw err;
+    }
+  };
+
+  deleteMaintenanceRecord = async (recordId: string) => {
+      if (!this.selectedClient) return;
+      try {
+          await apiClient.deleteMaintenanceRecord(recordId);
+          await this.selectClient(this.selectedClient.id);
+      } catch (err: any) {
+          runInAction(() => {
+              this.error = err.message || "Impossibile eliminare il record di manutenzione.";
+          });
+          throw err;
+      }
   };
   
   fetchDashboardStats = async () => {
