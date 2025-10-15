@@ -1,14 +1,17 @@
 import React, { createContext, useContext } from 'react';
 import { UserStore } from './UserStore.ts';
 import { ViewStore } from './ViewStore.ts';
+import { MechanicStore } from './MechanicStore.ts';
 
 export class RootStore {
   userStore: UserStore;
   viewStore: ViewStore;
+  mechanicStore: MechanicStore;
 
   constructor() {
     this.userStore = new UserStore(this);
     this.viewStore = new ViewStore(this);
+    this.mechanicStore = new MechanicStore(this);
   }
 }
 

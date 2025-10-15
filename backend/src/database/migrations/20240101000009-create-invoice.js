@@ -27,7 +27,7 @@ export default {
       clientId: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: { model: 'Users', key: 'id' }
+        references: { model: 'Clients', key: 'id' }
       },
       carId: {
         type: Sequelize.UUID,

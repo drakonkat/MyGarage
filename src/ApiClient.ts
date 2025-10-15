@@ -10,7 +10,10 @@ import {
     AutoDocVehicleOption,
     AutoDocVehiclesResponse,
     AnnualCostEstimate,
-    Client
+    Client,
+    Quote,
+    Invoice,
+    MechanicDashboardStats
 } from './types.ts';
 
 // --- Gemini AI Setup ---
@@ -166,13 +169,38 @@ class ApiClient {
         phone?: string; 
         email?: string; 
         password?: string 
-    }): Promise<any> {
+    }): Promise<Client> {
         return this.request('/mechanic/clients', {
             method: 'POST',
             body: JSON.stringify(clientData),
         });
     }
-    // ... Altri metodi per il meccanico
+    
+    async getMechanicDashboardStats(): Promise<MechanicDashboardStats> {
+        return this.request('/mechanic/dashboard-stats');
+    }
+
+    async getQuotes(): Promise<Quote[]> {
+        return this.request('/mechanic/quotes');
+    }
+
+    async createQuote(quoteData: Omit<Quote, 'id' | 'quoteNumber' | 'status'>): Promise<Quote> {
+        return this.request('/mechanic/quotes', {
+            method: 'POST',
+            body: JSON.stringify(quoteData),
+        });
+    }
+
+    async getInvoices(): Promise<Invoice[]> {
+        return this.request('/mechanic/invoices');
+    }
+
+    async createInvoice(invoiceData: Partial<Invoice>): Promise<Invoice> {
+        return this.request('/mechanic/invoices', {
+            method: 'POST',
+            body: JSON.stringify(invoiceData),
+        });
+    }
 }
 
 export const apiClient = new ApiClient();

@@ -35,6 +35,7 @@ export interface Car {
   make: string;
   model: string;
   year: number;
+  ownerId?: number; // L'ID del proprietario (User)
   maintenance: MaintenanceRecord[];
   knownIssues?: KnownIssue[];
   reminders?: Reminder[];
@@ -120,4 +121,64 @@ export interface Client {
   email?: string;
   phone?: string;
   createdAt: string;
+  userAccount?: {
+      id: number;
+      cars?: Car[];
+  };
+  // Aggiungiamo le auto direttamente qui per i clienti senza account
+  cars?: Car[];
+}
+
+// Tipi per Preventivi e Fatture
+export interface DocumentItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Quote {
+  id: number;
+  quoteNumber: string;
+  clientId: number;
+  carId: string;
+  quoteDate: string;
+  expiryDate?: string;
+
+  totalAmount: number;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'invoiced';
+  items: DocumentItem[];
+  notes?: string;
+  client?: Client;
+  car?: Car;
+}
+
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  quoteId?: number;
+  clientId: number;
+  carId: string;
+  invoiceDate: string;
+  dueDate?: string;
+  totalAmount: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  items: DocumentItem[];
+  notes?: string;
+  client?: Client;
+  car?: Car;
+}
+
+// Tipi per la Dashboard del Meccanico
+export interface MonthlyRevenue {
+    month: string;
+    revenue: number;
+}
+
+export interface MechanicDashboardStats {
+    clientCount: number;
+    totalRevenue: number;
+    pendingQuotes: number;
+    overdueInvoices: number;
+    monthlyRevenue: MonthlyRevenue[];
 }

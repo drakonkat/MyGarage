@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { Op, fn, col, literal } from 'sequelize';
 import db from '../database/models/index.js';
 const { User, Quote, Invoice, Car, Client } = db;
 
@@ -17,6 +18,62 @@ async function generateNextNumber(model, field, prefix) {
 
 
 const mechanicController = {
+    getDashboardStats: async (req, res) => {
+        const mechanicId = req.user.id;
+        try {
+            const clientCount = await Client.count({ where: { mechanicId } });
+            
+            const totalRevenueResult = await Invoice.findOne({
+                where: { mechanicId, status: 'paid' },
+                attributes: [[fn('SUM', col('totalAmount')), 'total']],
+                raw: true,
+            });
+            const totalRevenue = totalRevenueResult.total || 0;
+
+            const pendingQuotes = await Quote.count({ where: { mechanicId, status: 'sent' } });
+            
+            const overdueInvoices = await Invoice.count({
+                where: {
+                    mechanicId,
+                    status: 'sent',
+                    dueDate: { [Op.lt]: new Date() }
+                }
+            });
+
+            // Semplice aggregazione mensile per l'anno corrente
+            const monthlyRevenue = await Invoice.findAll({
+                where: {
+                    mechanicId,
+                    status: 'paid',
+                    // Filtra per l'anno corrente
+                    invoiceDate: {
+                        [Op.gte]: new Date(new Date().getFullYear(), 0, 1),
+                        [Op.lt]: new Date(new Date().getFullYear() + 1, 0, 1)
+                    }
+                },
+                attributes: [
+                    [fn('to_char', col('invoiceDate'), 'YYYY-MM'), 'month'],
+                    [fn('SUM', col('totalAmount')), 'revenue']
+                ],
+                group: ['month'],
+                order: [['month', 'ASC']],
+                raw: true,
+            });
+
+
+            res.status(200).json({
+                clientCount,
+                totalRevenue,
+                pendingQuotes,
+                overdueInvoices,
+                monthlyRevenue
+            });
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            res.status(500).json({ message: 'Errore nel recupero delle statistiche.' });
+        }
+    },
+
     // --- Client Management ---
     createClient: async (req, res) => {
         const mechanicId = req.user.id;
@@ -82,12 +139,24 @@ const mechanicController = {
         try {
             const clients = await Client.findAll({
                 where: { mechanicId },
-                attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'createdAt'],
+                include: [{
+                    model: User,
+                    as: 'userAccount',
+                    attributes: ['id'],
+                    required: false, // LEFT JOIN per includere clienti senza un account utente
+                    include: [{
+                        model: Car,
+                        as: 'cars',
+                        attributes: ['id', 'make', 'model', 'year'],
+                        required: false
+                    }]
+                }],
                 order: [['lastName', 'ASC'], ['firstName', 'ASC']]
             });
             res.status(200).json(clients);
-        } catch (error) {
-            console.error(error);
+        } catch (error)
+         {
+            console.error('Error fetching clients with cars:', error);
             res.status(500).json({ message: "Errore nel recupero dei clienti." });
         }
     },
@@ -98,7 +167,15 @@ const mechanicController = {
          try {
             const client = await Client.findOne({
                 where: { id: clientId, mechanicId }, // Assicura che il meccanico possa vedere solo i suoi clienti
-                // TODO: Includere le auto associate al cliente
+                 include: [{
+                    model: User,
+                    as: 'userAccount',
+                    attributes: ['id', 'email'],
+                    include: [{
+                        model: Car,
+                        as: 'cars'
+                    }]
+                }]
             });
             if (!client) {
                 return res.status(404).json({ message: "Cliente non trovato o non associato a questo account." });
@@ -113,12 +190,13 @@ const mechanicController = {
     // --- Quote & Invoice Management ---
     createQuote: async (req, res) => {
          const mechanicId = req.user.id;
-         const { clientId, carId, quoteDate, expiryDate, totalAmount, items, notes } = req.body;
+         const { clientId, carId, quoteDate, expiryDate, totalAmount, items, notes, status } = req.body;
          try {
+            // TODO: Validate that the client and car belong to the mechanic
             const quoteNumber = await generateNextNumber(Quote, 'quoteNumber', 'PREV-');
             const quote = await Quote.create({
                 mechanicId,
-                clientId, // Qui clientId si riferirà all'ID della tabella Client
+                clientId, 
                 carId,
                 quoteDate,
                 expiryDate,
@@ -126,7 +204,7 @@ const mechanicController = {
                 items,
                 notes,
                 quoteNumber,
-                status: 'draft'
+                status: status || 'draft'
             });
             res.status(201).json(quote);
          } catch(error) {
@@ -138,7 +216,14 @@ const mechanicController = {
     getQuotes: async (req, res) => {
         const mechanicId = req.user.id;
         try {
-            const quotes = await Quote.findAll({ where: { mechanicId }});
+            const quotes = await Quote.findAll({ 
+                where: { mechanicId },
+                include: [
+                    { model: Client, as: 'client' },
+                    { model: Car, as: 'car' }
+                ],
+                order: [['quoteDate', 'DESC']]
+            });
             res.status(200).json(quotes);
         } catch (error) {
             console.error(error);
@@ -148,7 +233,7 @@ const mechanicController = {
 
     createInvoice: async (req, res) => {
         const mechanicId = req.user.id;
-        const { clientId, carId, invoiceDate, dueDate, totalAmount, items, notes, quoteId } = req.body;
+        const { clientId, carId, invoiceDate, dueDate, totalAmount, items, notes, quoteId, status } = req.body;
         try {
             const invoiceNumber = await generateNextNumber(Invoice, 'invoiceNumber', 'FATT-');
              const invoice = await Invoice.create({
@@ -162,7 +247,7 @@ const mechanicController = {
                 notes,
                 quoteId,
                 invoiceNumber,
-                status: 'draft'
+                status: status || 'draft'
             });
              if (quoteId) {
                 await Quote.update({ status: 'invoiced' }, { where: { id: quoteId, mechanicId }});
@@ -177,7 +262,14 @@ const mechanicController = {
     getInvoices: async (req, res) => {
         const mechanicId = req.user.id;
         try {
-            const invoices = await Invoice.findAll({ where: { mechanicId }});
+            const invoices = await Invoice.findAll({ 
+                where: { mechanicId },
+                include: [
+                    { model: Client, as: 'client' },
+                    { model: Car, as: 'car' }
+                ],
+                order: [['invoiceDate', 'DESC']]
+            });
             res.status(200).json(invoices);
         } catch (error) {
             console.error(error);

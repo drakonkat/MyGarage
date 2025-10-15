@@ -5,7 +5,7 @@ export default (sequelize, DataTypes) => {
   class Invoice extends Model {
     static associate(models) {
       Invoice.belongsTo(models.User, { as: 'mechanic', foreignKey: 'mechanicId' });
-      Invoice.belongsTo(models.User, { as: 'client', foreignKey: 'clientId' });
+      Invoice.belongsTo(models.Client, { as: 'client', foreignKey: 'clientId' });
       Invoice.belongsTo(models.Car, { as: 'car', foreignKey: 'carId' });
       Invoice.belongsTo(models.Quote, { as: 'quote', foreignKey: 'quoteId' });
     }

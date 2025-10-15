@@ -7,6 +7,9 @@ const router = Router();
 // Tutti gli endpoint in questo file richiedono il ruolo 'mechanic'
 router.use(isMechanic);
 
+// --- Dashboard ---
+router.get('/dashboard-stats', mechanicController.getDashboardStats);
+
 // --- Client Management ---
 router.get('/clients', mechanicController.getClients);
 router.post('/clients', mechanicController.createClient);

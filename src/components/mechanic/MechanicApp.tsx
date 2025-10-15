@@ -1,97 +1,106 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, CircularProgress, Alert, Button, List, ListItem, ListItemText, Paper, ListItemIcon } from '@mui/material';
-import { PersonAdd } from '@mui/icons-material';
+import { Container, Typography, Box, Button, Tabs, Tab, CircularProgress } from '@mui/material';
+import { PersonAdd, People, Assessment, Receipt, RequestQuote } from '@mui/icons-material';
 import { observer } from 'mobx-react-lite';
 import Header from '../Header.tsx';
 import { useStores } from '../../stores/RootStore.ts';
-import { apiClient } from '../../ApiClient.ts';
-import { Client } from '../../types.ts';
 import CreateClientModal from './CreateClientModal.tsx';
+import ClientList from './ClientList.tsx';
+import MechanicDashboard from './MechanicDashboard.tsx';
+import QuotesView from './QuotesView.tsx';
+import InvoicesView from './InvoicesView.tsx';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`mechanic-tabpanel-${index}`}
+      aria-labelledby={`mechanic-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 const MechanicApp: React.FC = observer(() => {
-    const { userStore } = useStores();
-    const [clients, setClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const fetchClients = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const fetchedClients = await apiClient.getMyClients();
-            setClients(fetchedClients);
-        } catch (err: any) {
-            setError(err.message || "Impossibile caricare la lista clienti.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { mechanicStore } = useStores();
+    const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
-        if (userStore.isLoggedIn) {
-            fetchClients();
-        }
-    }, [userStore.isLoggedIn]);
+        // Carica tutti i dati necessari quando il componente viene montato
+        mechanicStore.fetchAllData();
+    }, [mechanicStore]);
 
     const handleClientCreated = () => {
-        setIsModalOpen(false);
-        fetchClients(); // Ricarica la lista dopo la creazione
+        setIsClientModalOpen(false);
+        mechanicStore.fetchClients(); // Ricarica solo i clienti dopo la creazione
+        mechanicStore.fetchDashboardStats(); // Aggiorna anche le statistiche
+    };
+    
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setActiveTab(newValue);
     };
 
+    const isLoading = mechanicStore.isLoadingClients || mechanicStore.isLoadingStats || mechanicStore.isLoadingQuotes || mechanicStore.isLoadingInvoices;
 
     return (
         <>
             <Header />
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h4" gutterBottom>
-                        Dashboard Officina
+            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+                    <Typography variant="h4">
+                        Gestionale Officina
                     </Typography>
                      <Button 
                         variant="contained" 
                         startIcon={<PersonAdd />}
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => setIsClientModalOpen(true)}
                     >
-                        Crea Nuovo Cliente
+                        Nuovo Cliente
                     </Button>
                 </Box>
                 
-                {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>}
-
-                <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-                    I Miei Clienti
-                </Typography>
-
-                {loading ? (
-                    <CircularProgress />
-                ) : (
-                    <Paper variant="outlined">
-                        <List>
-                            {clients.length === 0 && (
-                                <ListItem>
-                                    <ListItemText primary="Nessun cliente trovato." secondary="Aggiungine uno per iniziare a gestire i loro veicoli."/>
-                                </ListItem>
-                            )}
-                            {clients.map((client, index) => (
-                                <ListItem key={client.id} divider={index < clients.length - 1}>
-                                    <ListItemText 
-                                        primary={`${client.firstName} ${client.lastName}`}
-                                        secondary={client.email || client.phone || `Cliente dal: ${new Date(client.createdAt).toLocaleDateString()}`}
-                                    />
-                                     <Button variant="outlined" size="small">
-                                        Gestisci
-                                    </Button>
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Paper>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs value={activeTab} onChange={handleTabChange} aria-label="mechanic dashboard tabs">
+                        <Tab icon={<Assessment />} iconPosition="start" label="Dashboard" id="mechanic-tab-0" />
+                        <Tab icon={<People />} iconPosition="start" label="Clienti" id="mechanic-tab-1" />
+                        <Tab icon={<RequestQuote />} iconPosition="start" label="Preventivi" id="mechanic-tab-2" />
+                        <Tab icon={<Receipt />} iconPosition="start" label="Fatture" id="mechanic-tab-3" />
+                    </Tabs>
+                </Box>
+                
+                {isLoading && activeTab === 0 ? <CircularProgress sx={{ display: 'block', margin: '40px auto' }} /> : (
+                    <>
+                        <TabPanel value={activeTab} index={0}>
+                           <MechanicDashboard />
+                        </TabPanel>
+                        <TabPanel value={activeTab} index={1}>
+                            <ClientList />
+                        </TabPanel>
+                        <TabPanel value={activeTab} index={2}>
+                            <QuotesView />
+                        </TabPanel>
+                         <TabPanel value={activeTab} index={3}>
+                            <InvoicesView />
+                        </TabPanel>
+                    </>
                 )}
+
             </Container>
             
             <CreateClientModal
-                open={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                open={isClientModalOpen}
+                onClose={() => setIsClientModalOpen(false)}
                 onClientCreated={handleClientCreated}
             />
         </>
