@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    Modal, Box, Typography, TextField, Button, CircularProgress, Alert, Stack, Autocomplete
+    Modal, Box, Typography, TextField, Button, CircularProgress, Alert, Stack, Autocomplete, IconButton, Tooltip
 } from '@mui/material';
 import { useStores } from '../../stores/RootStore.ts';
 import { observer } from 'mobx-react-lite';
 import { Client, Car, DocumentItem } from '../../types.ts';
 import { apiClient } from '../../ApiClient.ts';
+import { Delete } from '@mui/icons-material';
 
 const modalStyleSx = {
   position: 'absolute' as 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: { xs: '95%', sm: 500 },
+  width: { xs: '95%', sm: 600 },
   bgcolor: 'background.paper',
   borderRadius: 2,
   boxShadow: 24,
@@ -141,11 +142,17 @@ const CreateQuoteModal: React.FC<CreateQuoteModalProps> = observer(({ open, onCl
 
                     <Typography variant="subtitle1" sx={{pt: 1}}>Dettagli</Typography>
                      {items.map((item, index) => (
-                        <Stack direction="row" spacing={1} key={index}>
+                        <Stack direction="row" spacing={1} key={index} alignItems="center">
                            <TextField label="Descrizione" value={item.description} onChange={e => handleItemChange(index, 'description', e.target.value)} required fullWidth/>
-                           <TextField label="Qtà" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseFloat(e.target.value))} required sx={{width: 80}}/>
+                           <TextField label="Qtà" type="number" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', parseFloat(e.target.value))} required sx={{width: 100}}/>
                            <TextField label="Prezzo Unit." type="number" value={item.unitPrice} onChange={e => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))} required sx={{width: 120}}/>
-                           <Button onClick={() => removeItem(index)} disabled={items.length === 1}>X</Button>
+                           <Tooltip title="Rimuovi riga">
+                                <span>
+                                    <IconButton onClick={() => removeItem(index)} disabled={items.length === 1}>
+                                        <Delete />
+                                    </IconButton>
+                                </span>
+                           </Tooltip>
                         </Stack>
                     ))}
                     <Button onClick={addItem}>Aggiungi Riga</Button>
