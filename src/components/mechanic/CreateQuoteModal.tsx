@@ -39,11 +39,7 @@ const CreateQuoteModal: React.FC<CreateQuoteModalProps> = observer(({ open, onCl
     const [error, setError] = useState<string | null>(null);
 
     const availableCars = useMemo(() => {
-        if (!selectedClient) return [];
-        // Combina le auto dall'account utente e quelle direttamente associate al cliente
-        const fromAccount = selectedClient.userAccount?.cars || [];
-        const direct = selectedClient.cars || [];
-        return [...fromAccount, ...direct];
+        return selectedClient?.cars || [];
     }, [selectedClient]);
 
     const resetForm = () => {
@@ -125,7 +121,7 @@ const CreateQuoteModal: React.FC<CreateQuoteModalProps> = observer(({ open, onCl
                     />
                      <Autocomplete
                         options={availableCars}
-                        getOptionLabel={(option) => `${option.year} ${option.make} ${option.model}`}
+                        getOptionLabel={(option) => `${option.year} ${option.make} ${option.model} (${option.licensePlate || 'N/D'})`}
                         value={selectedCar}
                         onChange={(e, newValue) => setSelectedCar(newValue)}
                         disabled={!selectedClient}

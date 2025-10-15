@@ -40,8 +40,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = observer(({ open, 
     const [error, setError] = useState<string | null>(null);
 
     const availableCars = useMemo(() => {
-        if (!selectedClient) return [];
-        return [...(selectedClient.userAccount?.cars || []), ...(selectedClient.cars || [])];
+        return selectedClient?.cars || [];
     }, [selectedClient]);
 
     const availableQuotes = useMemo(() => {
@@ -137,7 +136,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = observer(({ open, 
                     />
                      <Autocomplete
                         options={availableCars}
-                        getOptionLabel={(option) => `${option.year} ${option.make} ${option.model}`}
+                        getOptionLabel={(option) => `${option.year} ${option.make} ${option.model} (${option.licensePlate || 'N/D'})`}
                         value={selectedCar}
                         onChange={(e, newValue) => setSelectedCar(newValue)}
                         disabled={!selectedClient}

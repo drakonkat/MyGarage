@@ -70,6 +70,7 @@ const mechanicController = {
     try {
       const clients = await Client.findAll({
         where: { mechanicId: req.user.id },
+        include: [{ model: Car, as: 'cars' }], // Eager load cars with clients
         order: [['lastName', 'ASC'], ['firstName', 'ASC']],
       });
       res.status(200).json(clients);
