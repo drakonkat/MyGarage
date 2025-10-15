@@ -9,11 +9,8 @@ import {
     CircularProgress,
     FormControlLabel,
     Switch,
-    Stack,
-    InputAdornment,
-    IconButton
+    Stack
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
 import { modalStyle } from '../theme.ts';
 import { AutoDocMakerOption, AutoDocModelOption, AutoDocVehicleOption } from '../types.ts';
 import { apiClient } from '../ApiClient.ts';
@@ -49,7 +46,6 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
     const [isMakesLoading, setIsMakesLoading] = useState(false);
     const [isModelsLoading, setIsModelsLoading] = useState(false);
     const [isVehiclesLoading, setIsVehiclesLoading] = useState(false);
-    const [isSearchingByPlate, setIsSearchingByPlate] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -113,64 +109,6 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
         }
     };
 
-    const handlePlateSearch = async () => {
-        if (!licensePlate.trim()) {
-            setError("Inserisci una targa da cercare.");
-            return;
-        }
-        setIsSearchingByPlate(true);
-        setError(null);
-        try {
-            const result = await apiClient.searchByPlate(licensePlate);
-            // La risposta attesa da AutoDoc ha una prop 'tree' con [makerId, modelId, vehicleId]
-            if (result && result.tree && Array.isArray(result.tree) && result.tree.length >= 3) {
-                const [makerId, modelId, vehicleId] = result.tree;
-
-                // Step 1: Carica (se necessario) e trova la marca
-                let currentMakes = carMakes;
-                if (currentMakes.length === 0) {
-                    setIsMakesLoading(true);
-                    currentMakes = await apiClient.fetchMakes();
-                    setCarMakes(currentMakes);
-                    setIsMakesLoading(false);
-                }
-                const foundMake = currentMakes.find(m => m.id === makerId);
-                if (!foundMake) throw new Error("Marca non trovata nel database.");
-                setSelectedMake(foundMake);
-                
-                // Step 2: Carica e trova il modello
-                setIsModelsLoading(true);
-                const models = await apiClient.fetchModels(makerId);
-                setCarModels(models);
-                const foundModel = models.find(m => m.id === modelId);
-                setIsModelsLoading(false);
-                if (!foundModel) throw new Error("Modello non trovato.");
-                setSelectedModel(foundModel);
-
-                // Step 3: Carica e trova la motorizzazione
-                setIsVehiclesLoading(true);
-                const vehicles = await apiClient.fetchVehicles(modelId);
-                setCarVehicles(vehicles);
-                const foundVehicle = vehicles.find(v => v.id === vehicleId);
-                setIsVehiclesLoading(false);
-                if (!foundVehicle) throw new Error("Motorizzazione non trovata.");
-                setSelectedVehicle(foundVehicle);
-                
-                // Il selettore manuale viene disattivato
-                setIsManual(false);
-
-            } else {
-                throw new Error("Targa non trovata o risposta API non valida.");
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            setError(`Ricerca fallita: ${errorMessage}. Prova a inserire i dati manualmente.`);
-        } finally {
-            setIsSearchingByPlate(false);
-        }
-    };
-
-
     const resetForm = () => {
         setIsManual(false);
         setCarModels([]);
@@ -222,20 +160,11 @@ const AddCarModal: React.FC<AddCarModalProps> = ({ open, onClose, onAddCar, setE
 
                 <Stack spacing={2} sx={{mt: 1}}>
                      <TextField
-                        label="Targa"
+                        label="Targa (Opzionale)"
                         fullWidth
                         value={licensePlate}
                         onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
                         inputProps={{ style: { textTransform: 'uppercase' } }}
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton onClick={handlePlateSearch} disabled={isSearchingByPlate || isManual} edge="end">
-                                        {isSearchingByPlate ? <CircularProgress size={20} /> : <Search />}
-                                    </IconButton>
-                                </InputAdornment>
-                            )
-                        }}
                     />
 
                     {isManual ? (

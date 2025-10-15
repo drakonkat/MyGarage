@@ -161,14 +161,6 @@ class ApiClient {
         return this.request(`/vehicles/vehicles/${modelId}`);
     }
 
-    async searchByPlate(licensePlate: string): Promise<any> {
-        return this.request('/vehicles/search-by-plate', {
-            method: 'POST',
-            body: JSON.stringify({ licensePlate }),
-        });
-    }
-
-
     // --- Personal User ---
     async getMyCars(): Promise<Car[]> {
         return this.request('/client/cars');
