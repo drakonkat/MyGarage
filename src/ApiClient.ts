@@ -1,141 +1,65 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import {
     MaintenanceRecord,
-    ResourceLinks,
     Car,
-    AutoDocMakerOption,
-    AutoDocModelOption,
-    AutoDocVehicleOption,
     AnnualCostEstimate,
+    ResourceLinks,
+    User,
     Client,
     Quote,
     Invoice,
     MechanicDashboardStats,
-    InventoryItem
+    InventoryItem,
+    AutoDocMakerOption,
+    AutoDocMakersResponse,
+    AutoDocModelOption,
+    AutoDocModelsResponse,
+    AutoDocVehicleOption,
+    AutoDocVehiclesResponse,
 } from './types.ts';
 
-// --- Gemini AI Setup ---
-// Inizializzazione condizionale per prevenire crash se la chiave API manca.
-let ai: GoogleGenAI | null = null;
-const apiKey = import.meta.env?.VITE_GEMINI_API_KEY;
+// Safely access the API key. If `import.meta.env` is undefined or the key is missing,
+// geminiApiKey will be undefined.
+const geminiApiKey = import.meta.env?.VITE_GEMINI_API_KEY;
+const ai = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
 
-if (apiKey) {
-    try {
-        ai = new GoogleGenAI({ apiKey });
-    } catch (e) {
-        console.error("Impossibile inizializzare GoogleGenAI. Le funzionalità IA useranno i dati di fallback.", e);
-    }
-} else {
-    console.warn("VITE_GEMINI_API_KEY non è impostata. Le funzionalità IA useranno i dati di fallback.");
+if (!geminiApiKey) {
+    console.warn("VITE_GEMINI_API_KEY non è definita. Le funzionalità AI non saranno disponibili.");
 }
 
-// --- Funzioni di Fallback ---
-
-const getGenericMaintenanceSchedule = (currentMileage: number): MaintenanceRecord[] => {
-    console.log("Nessuna API key trovata o errore API. Uso il piano di manutenzione generico.");
-    const genericSchedule = [
-        { description: 'Cambio olio e filtro', interval: 15000 },
-        { description: 'Controllo pastiglie freni', interval: 30000 },
-        { description: 'Sostituzione filtro aria', interval: 40000 },
-        { description: 'Controllo e rotazione pneumatici', interval: 10000 },
-    ];
-
-    return genericSchedule.map(item => {
-        // Calcola il prossimo chilometraggio per l'intervento.
-        const nextMileage = (Math.floor(currentMileage / item.interval) + 1) * item.interval;
-        return {
-            id: crypto.randomUUID(),
-            date: 'N/A',
-            mileage: nextMileage,
-            description: item.description,
-            cost: 0,
-            isRecommendation: true,
-        };
-    });
-};
-
-const getGenericSimulation = (car: Car, targetMileage: number): { records: MaintenanceRecord[], annualCosts: AnnualCostEstimate } => {
-    console.log("Nessuna API key trovata o errore API. Uso la simulazione generica.");
-    const currentMileage = car.maintenance.length > 0 ? Math.max(...car.maintenance.map(m => m.mileage)) : 0;
-
-    const genericInterventions = [
-        { description: 'Cambio olio e filtro', interval: 15000, cost: 150, diy: 70 },
-        { description: 'Sostituzione pastiglie freni anteriori', interval: 60000, cost: 250, diy: 100 },
-        { description: 'Sostituzione filtro aria', interval: 40000, cost: 80, diy: 30 },
-        { description: 'Sostituzione set completo pneumatici', interval: 80000, cost: 500, diy: 400 },
-        { description: 'Sostituzione cinghia di distribuzione', interval: 120000, cost: 700, diy: 300 },
-    ];
-    
-    const records: MaintenanceRecord[] = [];
-    genericInterventions.forEach(item => {
-        let nextMileage = (Math.floor(currentMileage / item.interval) + 1) * item.interval;
-        while (nextMileage <= targetMileage) {
-            records.push({
-                id: crypto.randomUUID(),
-                date: 'Previsto',
-                description: item.description,
-                mileage: nextMileage,
-                cost: item.cost,
-                diyCost: item.diy,
-            });
-            nextMileage += item.interval;
-        }
-    });
-
-    const annualCosts: AnnualCostEstimate = {
-        insuranceRange: [300, 800],
-        roadTaxRange: [150, 400],
-    };
-
-    return { records, annualCosts };
-};
-
-
-// --- Main API Client for Backend ---
 class ApiClient {
-    private baseUrl: string;
     private token: string | null = null;
-
-    constructor() {
-        this.baseUrl = import.meta.env?.VITE_API_BASE_URL || 'https://mygarage.tnl.one/api/v1';
-    }
+    // Use the requested fallback URL and safe access.
+    private baseUrl: string = import.meta.env?.VITE_API_BASE_URL || 'https://mygarage.tnl.one/api/v1';
 
     setToken(token: string | null) {
         this.token = token;
     }
 
-    private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
-        const url = `${this.baseUrl}${endpoint}`;
-        const headers = new Headers(options.headers || {});
-        headers.append('Content-Type', 'application/json');
-
+    private async request(endpoint: string, options: RequestInit = {}) {
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        };
         if (this.token) {
-            headers.append('Authorization', `Bearer ${this.token}`);
+            headers['Authorization'] = `Bearer ${this.token}`;
         }
 
-        const config: RequestInit = {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
             ...options,
             headers,
-        };
+        });
 
-        try {
-            const response = await fetch(url, config);
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: response.statusText }));
-                throw new Error(errorData.message || 'An unknown API error occurred');
-            }
-            if (response.status === 204) {
-                return null;
-            }
-            return await response.json();
-        } catch (error) {
-            console.error(`API request failed: ${error}`);
-            throw error;
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(errorData.message || 'An API error occurred');
         }
+
+        return response.json();
     }
 
     // --- Auth ---
-    async login(email: string, password: string): Promise<any> {
+    async login(email: string, password: string): Promise<{ token: string; user: User }> {
         return this.request('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
@@ -148,68 +72,66 @@ class ApiClient {
             body: JSON.stringify({ email, password, role }),
         });
     }
-
-    // --- Vehicle Data (for Autocompletes) ---
-    async fetchMakes(): Promise<AutoDocMakerOption[]> {
-        return this.request('/vehicles/makes');
-    }
-
-    async fetchModels(makeId: number): Promise<AutoDocModelOption[]> {
-        return this.request(`/vehicles/models/${makeId}`);
-    }
-
-    async fetchVehicles(modelId: number): Promise<AutoDocVehicleOption[]> {
-        return this.request(`/vehicles/vehicles/${modelId}`);
-    }
-
+    
     // --- Personal User ---
     async getMyCars(): Promise<Car[]> {
         return this.request('/client/cars');
     }
-    
-    // ... Altri metodi per l'utente personale (addCar, addMaintenance, etc.)
 
     // --- Mechanic ---
-    async getMyClients(): Promise<Client[]> {
+    async getDashboardStats(): Promise<MechanicDashboardStats> {
+        return this.request('/mechanic/stats');
+    }
+    
+    async getClients(): Promise<Client[]> {
         return this.request('/mechanic/clients');
     }
 
-    async getClientDetails(clientId: number): Promise<Client> {
-        return this.request(`/mechanic/clients/${clientId}`);
+    async getClientById(id: number): Promise<Client> {
+        return this.request(`/mechanic/clients/${id}`);
     }
 
-    async addCarToClient(clientId: number, carData: { make: string; model: string; year: string; mileage: string; licensePlate?: string; }): Promise<Car> {
-        return this.request(`/mechanic/clients/${clientId}/cars`, {
-            method: 'POST',
-            body: JSON.stringify(carData),
-        });
-    }
-
-    async createClient(clientData: { 
-        firstName: string; 
-        lastName: string; 
-        phone?: string; 
-        email?: string; 
-        password?: string 
-    }): Promise<Client> {
+    async createClient(clientData: Partial<Client> & { password?: string }): Promise<Client> {
         return this.request('/mechanic/clients', {
             method: 'POST',
             body: JSON.stringify(clientData),
         });
     }
+
+    async addCarToClient(clientId: number, carData: any): Promise<Car> {
+        return this.request(`/mechanic/clients/${clientId}/cars`, {
+            method: 'POST',
+            body: JSON.stringify(carData),
+        });
+    }
     
-    async getMechanicDashboardStats(): Promise<MechanicDashboardStats> {
-        return this.request('/mechanic/dashboard-stats');
+    async addMaintenanceRecord(carId: string, record: Omit<MaintenanceRecord, 'id'>): Promise<MaintenanceRecord> {
+        return this.request(`/mechanic/cars/${carId}/maintenance`, {
+            method: 'POST',
+            body: JSON.stringify(record),
+        });
+    }
+    
+    async deleteMaintenanceRecord(recordId: string): Promise<void> {
+        return this.request(`/mechanic/maintenance/${recordId}`, {
+            method: 'DELETE',
+        });
     }
 
     async getQuotes(): Promise<Quote[]> {
         return this.request('/mechanic/quotes');
     }
 
-    async createQuote(quoteData: Omit<Quote, 'id' | 'quoteNumber' | 'status'>): Promise<Quote> {
+    async createQuote(quoteData: Partial<Quote>): Promise<Quote> {
         return this.request('/mechanic/quotes', {
             method: 'POST',
             body: JSON.stringify(quoteData),
+        });
+    }
+
+    async deleteQuote(quoteId: number): Promise<void> {
+        await this.request(`/mechanic/quotes/${quoteId}`, {
+            method: 'DELETE',
         });
     }
 
@@ -224,58 +146,57 @@ class ApiClient {
         });
     }
 
-    // --- Maintenance ---
-    async addMaintenanceRecordToCar(carId: string, recordData: Omit<MaintenanceRecord, 'id' | 'carId'>): Promise<MaintenanceRecord> {
-        return this.request(`/mechanic/cars/${carId}/maintenance`, {
-            method: 'POST',
-            body: JSON.stringify(recordData),
-        });
-    }
-
-    async deleteMaintenanceRecord(recordId: string): Promise<void> {
-        return this.request(`/mechanic/maintenance/${recordId}`, {
+    async deleteInvoice(invoiceId: number): Promise<void> {
+        await this.request(`/mechanic/invoices/${invoiceId}`, {
             method: 'DELETE',
         });
     }
-
-    // --- Inventory ---
-    async getInventoryItems(): Promise<InventoryItem[]> {
+    
+    async getInventory(): Promise<InventoryItem[]> {
         return this.request('/mechanic/inventory');
     }
 
-    async createInventoryItem(itemData: Omit<InventoryItem, 'id' | 'mechanicId'>): Promise<InventoryItem> {
+    async addInventoryItem(item: Partial<InventoryItem>): Promise<InventoryItem> {
         return this.request('/mechanic/inventory', {
             method: 'POST',
-            body: JSON.stringify(itemData),
+            body: JSON.stringify(item),
         });
     }
 
-    async updateInventoryItem(itemId: number, itemData: Partial<InventoryItem>): Promise<InventoryItem> {
-        return this.request(`/mechanic/inventory/${itemId}`, {
+    async updateInventoryItem(id: number, item: Partial<InventoryItem>): Promise<InventoryItem> {
+        return this.request(`/mechanic/inventory/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(itemData),
+            body: JSON.stringify(item),
         });
     }
 
-    async deleteInventoryItem(itemId: number): Promise<void> {
-        return this.request(`/mechanic/inventory/${itemId}`, {
+    async deleteInventoryItem(id: number): Promise<void> {
+        return this.request(`/mechanic/inventory/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // --- Vehicle Data (from backend proxy) ---
+    async fetchMakes(): Promise<AutoDocMakerOption[]> {
+       return this.request('/vehicles/makes');
+    }
+    async fetchModels(makerId: number): Promise<AutoDocModelOption[]> {
+        return this.request(`/vehicles/models/${makerId}`);
+    }
+    async fetchVehicles(modelId: number): Promise<AutoDocVehicleOption[]> {
+        return this.request(`/vehicles/vehicles/${modelId}`);
     }
 }
 
 export const apiClient = new ApiClient();
 
-
-// --- Gemini API (kept separate for clarity) ---
-
+// --- Gemini API Service ---
+// Note: This part is kept separate to be used in anonymous mode without authentication.
 export const geminiApi = {
     async fetchMaintenanceSchedule(make: string, model: string, year: number, currentMileage: number): Promise<MaintenanceRecord[]> {
-        if (!ai) {
-            return getGenericMaintenanceSchedule(currentMileage);
-        }
-        try {
-            const prompt = `Genera in italiano una lista base di 3-5 interventi di manutenzione chiave per una ${year} ${make} ${model} con un chilometraggio attuale di ${currentMileage} km.
+        if (!ai) throw new Error("Le funzionalità AI non sono disponibili: la chiave API non è configurata.");
+        
+        const prompt = `Genera in italiano una lista base di 3-5 interventi di manutenzione chiave per una ${year} ${make} ${model} con un chilometraggio attuale di ${currentMileage} km.
 Per ogni intervento, suggerisci il PROSSIMO chilometraggio a cui effettuarlo.
 Rispondi solo con un array JSON di oggetti. Ogni oggetto deve avere:
 - "description": una stringa con la descrizione dell'intervento (es. "Cambio olio e filtro").
@@ -283,40 +204,33 @@ Rispondi solo con un array JSON di oggetti. Ogni oggetto deve avere:
 Assicurati che il chilometraggio suggerito per ogni intervento sia superiore a quello attuale (${currentMileage} km).
 Non includere interventi il cui chilometraggio è inferiore o uguale a quello attuale.
 Il JSON deve essere formattato correttamente.`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                description: { type: Type.STRING },
-                                mileage: { type: Type.NUMBER }
-                            },
-                            required: ["description", "mileage"]
-                        }
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            description: { type: Type.STRING },
+                            mileage: { type: Type.NUMBER }
+                        },
+                        required: ["description", "mileage"]
                     }
                 }
-            });
-            const schedule = JSON.parse(response.text.trim());
-            return schedule.map((item: any) => ({ ...item, id: crypto.randomUUID(), date: 'N/A', cost: 0, isRecommendation: true })) as MaintenanceRecord[];
-        } catch (error) {
-            console.error("Chiamata API Gemini per il piano di manutenzione fallita. Uso il fallback.", error);
-            return getGenericMaintenanceSchedule(currentMileage);
-        }
+            }
+        });
+        const schedule = JSON.parse(response.text.trim());
+        return schedule.map((item: any) => ({ ...item, id: crypto.randomUUID(), date: 'N/A', cost: 0, isRecommendation: true })) as MaintenanceRecord[];
     },
     async fetchMaintenanceSimulation(car: Car, targetMileage: number): Promise<{ records: MaintenanceRecord[], annualCosts: AnnualCostEstimate }> {
-        if (!ai) {
-            return getGenericSimulation(car, targetMileage);
-        }
-        try {
-            const currentMileage = car.maintenance.length > 0 ? Math.max(...car.maintenance.map(m => m.mileage)) : 0;
-            
-            const prompt = `Genera in italiano una simulazione dei costi di manutenzione per una ${car.year} ${car.make} ${car.model}.
+        if (!ai) throw new Error("Le funzionalità AI non sono disponibili: la chiave API non è configurata.");
+        const currentMileage = car.maintenance.length > 0 ? Math.max(...car.maintenance.map(m => m.mileage)) : 0;
+        
+        const prompt = `Genera in italiano una simulazione dei costi di manutenzione per una ${car.year} ${car.make} ${car.model}.
 Il chilometraggio attuale è ${currentMileage} km e la simulazione deve arrivare fino a ${targetMileage} km.
 
 Rispondi solo con un oggetto JSON che abbia la seguente struttura:
@@ -332,86 +246,75 @@ Rispondi solo con un oggetto JSON che abbia la seguente struttura:
 Se non ci sono interventi di manutenzione previsti, la chiave "interventi" deve contenere un array vuoto.
 Il JSON deve essere formattato correttamente.`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            interventi: {
-                                type: Type.ARRAY,
-                                items: {
-                                    type: Type.OBJECT,
-                                    properties: {
-                                        description: { type: Type.STRING },
-                                        mileage: { type: Type.NUMBER },
-                                        costoTotaleStimato: { type: Type.NUMBER },
-                                        costoPartiFaidate: { type: Type.NUMBER }
-                                    },
-                                    required: ["description", "mileage", "costoTotaleStimato", "costoPartiFaidate"]
-                                }
-                            },
-                            costiAnnali: {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ parts: [{ text: prompt }] }],
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        interventi: {
+                            type: Type.ARRAY,
+                            items: {
                                 type: Type.OBJECT,
                                 properties: {
-                                    assicurazione: { type: Type.ARRAY, items: { type: Type.NUMBER } },
-                                    bollo: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                                    description: { type: Type.STRING },
+                                    mileage: { type: Type.NUMBER },
+                                    costoTotaleStimato: { type: Type.NUMBER },
+                                    costoPartiFaidate: { type: Type.NUMBER }
                                 },
-                                required: ["assicurazione", "bollo"]
+                                required: ["description", "mileage", "costoTotaleStimato", "costoPartiFaidate"]
                             }
                         },
-                        required: ["interventi", "costiAnnali"]
-                    }
+                        costiAnnali: {
+                            type: Type.OBJECT,
+                            properties: {
+                                assicurazione: { type: Type.ARRAY, items: { type: Type.NUMBER } },
+                                bollo: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                            },
+                            required: ["assicurazione", "bollo"]
+                        }
+                    },
+                    required: ["interventi", "costiAnnali"]
                 }
-            });
-            const simulationData = JSON.parse(response.text.trim());
+            }
+        });
+        const simulationData = JSON.parse(response.text.trim());
 
-            const records: MaintenanceRecord[] = simulationData.interventi.map((item: any) => ({
-                id: crypto.randomUUID(),
-                date: 'Previsto',
-                description: item.description,
-                mileage: item.mileage,
-                cost: item.costoTotaleStimato,
-                diyCost: item.costoPartiFaidate,
-            }));
+        const records: MaintenanceRecord[] = simulationData.interventi.map((item: any) => ({
+            id: crypto.randomUUID(),
+            date: 'Previsto',
+            description: item.description,
+            mileage: item.mileage,
+            cost: item.costoTotaleStimato,
+            diyCost: item.costoPartiFaidate,
+        }));
 
-            const annualCosts: AnnualCostEstimate = {
-                insuranceRange: simulationData.costiAnnali.assicurazione,
-                roadTaxRange: simulationData.costiAnnali.bollo
-            };
-        
-            return { records, annualCosts };
-        } catch (error) {
-            console.error("Chiamata API Gemini per la simulazione fallita. Uso il fallback.", error);
-            return getGenericSimulation(car, targetMileage);
-        }
+        const annualCosts: AnnualCostEstimate = {
+            insuranceRange: simulationData.costiAnnali.assicurazione,
+            roadTaxRange: simulationData.costiAnnali.bollo
+        };
+    
+        return { records, annualCosts };
     },
     async fetchResources(car: Car, record: MaintenanceRecord): Promise<ResourceLinks> {
-        if (!ai) {
-            console.warn("API Gemini non inizializzata. Salto il recupero delle risorse.");
-            return {};
-        }
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: `Find resources for this maintenance task: "${record.description}" on a ${car.year} ${car.make} ${car.model}. Provide a YouTube tutorial link and a link to buy parts (e.g., from AutoDoc or a similar site). Respond as a JSON object with keys "youtube" and "parts_link".`,
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            youtube: { type: Type.STRING },
-                            parts_link: { type: Type.STRING }
-                        }
-                    }
+        if (!ai) throw new Error("Le funzionalità AI non sono disponibili: la chiave API non è configurata.");
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ parts: [{ text: `Find resources for this maintenance task: "${record.description}" on a ${car.year} ${car.make} ${car.model}. Provide a YouTube tutorial link and a link to buy parts (e.g., from AutoDoc or a similar site). Respond as a JSON object with keys "youtube" and "parts_link".` }] }],
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        youtube: { type: Type.STRING },
+                        parts_link: { type: Type.STRING }
+                    },
+                    required: ['youtube', 'parts_link']
                 }
-            });
-            return JSON.parse(response.text.trim());
-        } catch (error) {
-            console.error("Chiamata API Gemini per le risorse fallita. Ritorno un oggetto vuoto.", error);
-            return {};
-        }
+            }
+        });
+        return JSON.parse(response.text.trim());
     }
 };

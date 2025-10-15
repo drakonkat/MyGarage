@@ -1,232 +1,245 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { RootStore } from './RootStore.ts';
 import { apiClient } from '../ApiClient.ts';
-import { Client, Quote, Invoice, MechanicDashboardStats, InventoryItem, Car, MaintenanceRecord } from '../types.ts';
-
-const initialDashboardStats: MechanicDashboardStats = {
-    clientCount: 0,
-    totalRevenue: 0,
-    pendingQuotes: 0,
-    overdueInvoices: 0,
-    monthlyRevenue: [],
-};
+import { Client, Quote, Invoice, InventoryItem, Car, MechanicDashboardStats, MaintenanceRecord } from '../types.ts';
 
 export class MechanicStore {
-  rootStore: RootStore;
-  clients: Client[] = [];
-  quotes: Quote[] = [];
-  invoices: Invoice[] = [];
-  inventory: InventoryItem[] = [];
-  dashboardStats: MechanicDashboardStats = initialDashboardStats;
+    rootStore: RootStore;
 
-  selectedClient: Client | null = null;
-  selectedCar: Car | null = null;
-  isLoadingClientDetails: boolean = false;
+    // State properties
+    clients: Client[] = [];
+    quotes: Quote[] = [];
+    invoices: Invoice[] = [];
+    inventory: InventoryItem[] = [];
+    dashboardStats: MechanicDashboardStats = {
+        clientCount: 0,
+        totalRevenue: 0,
+        pendingQuotes: 0,
+        overdueInvoices: 0,
+        monthlyRevenue: [],
+    };
+    
+    selectedClient: Client | null = null;
+    selectedCar: Car | null = null;
 
-  isLoadingClients: boolean = false;
-  isLoadingQuotes: boolean = false;
-  isLoadingInvoices: boolean = false;
-  isLoadingInventory: boolean = false;
-  isLoadingStats: boolean = false;
-  
-  error: string | null = null;
+    // UI state
+    isLoadingClients = false;
+    isLoadingClientDetails = false;
+    isLoadingQuotes = false;
+    isLoadingInvoices = false;
+    isLoadingInventory = false;
+    isLoadingStats = false;
+    error: string | null = null;
 
-  constructor(rootStore: RootStore) {
-    makeAutoObservable(this);
-    this.rootStore = rootStore;
-  }
-
-  // Unified fetch for initial load
-  fetchAllData = async () => {
-      this.fetchClients();
-      this.fetchQuotes();
-      this.fetchInvoices();
-      this.fetchDashboardStats();
-      this.fetchInventory();
-  }
-
-  fetchClients = async () => {
-    this.isLoadingClients = true;
-    this.error = null;
-    try {
-      const clientsData = await apiClient.getMyClients();
-      runInAction(() => {
-        this.clients = clientsData;
-      });
-    } catch (err: any) {
-      runInAction(() => {
-        this.error = err.message || "Impossibile caricare i dati dei clienti.";
-      });
-    } finally {
-      runInAction(() => {
-        this.isLoadingClients = false;
-      });
+    constructor(rootStore: RootStore) {
+        makeAutoObservable(this, {}, { autoBind: true });
+        this.rootStore = rootStore;
     }
-  };
 
-  selectClient = async (clientId: number) => {
-    this.isLoadingClientDetails = true;
-    this.error = null;
-    try {
-      const clientDetails = await apiClient.getClientDetails(clientId);
-      runInAction(() => {
-        this.selectedClient = clientDetails;
-         if (this.selectedCar) {
-            this.selectedCar = clientDetails.cars?.find(c => c.id === this.selectedCar!.id) || null;
+    // --- Actions ---
+
+    // Combined fetch for initial load
+    fetchAllData = () => {
+        this.fetchClients();
+        this.fetchQuotes();
+        this.fetchInvoices();
+        this.fetchInventory();
+        this.fetchDashboardStats();
+    }
+
+    // Clients
+    fetchClients = async () => {
+        this.isLoadingClients = true;
+        this.error = null;
+        try {
+            const clients = await apiClient.getClients();
+            runInAction(() => {
+                this.clients = clients;
+            });
+        } catch (err: any) {
+            runInAction(() => {
+                this.error = err.message;
+            });
+        } finally {
+            runInAction(() => {
+                this.isLoadingClients = false;
+            });
         }
-      });
-    } catch (err: any) {
-      runInAction(() => {
-        this.error = err.message || "Impossibile caricare i dettagli del cliente.";
-        this.selectedClient = null; // Reset on error
-      });
-    } finally {
-      runInAction(() => {
-        this.isLoadingClientDetails = false;
-      });
     }
-  };
 
-  unselectClient = () => {
-    this.selectedClient = null;
-    this.selectedCar = null;
-  };
-
-  selectCar = (car: Car) => {
-    this.selectedCar = car;
-  };
-
-  unselectCar = () => {
-    this.selectedCar = null;
-  };
-  
-  addCarToClient = async (carData: { make: string; model: string; year: string; mileage: string; licensePlate?: string; }) => {
-    if (!this.selectedClient) return;
-    this.error = null;
-    try {
-      await apiClient.addCarToClient(this.selectedClient.id, carData);
-      // Refresh client data
-      await this.selectClient(this.selectedClient.id);
-    } catch (err: any) {
-      runInAction(() => {
-        this.error = err.message || "Impossibile aggiungere il veicolo.";
-      });
-      throw err; // re-throw to be caught in modal
+    selectClient = async (clientId: number) => {
+        this.isLoadingClientDetails = true;
+        this.error = null;
+        this.selectedCar = null; // Unselect car when selecting a new client
+        try {
+            const client = await apiClient.getClientById(clientId);
+            runInAction(() => {
+                this.selectedClient = client;
+            });
+        } catch (err: any) {
+             runInAction(() => {
+                this.error = err.message;
+            });
+        } finally {
+             runInAction(() => {
+                this.isLoadingClientDetails = false;
+            });
+        }
     }
-  };
 
-  addMaintenanceRecord = async (carId: string, recordData: Omit<MaintenanceRecord, 'id' | 'carId'>) => {
-    if (!this.selectedClient) return;
-    try {
-        await apiClient.addMaintenanceRecordToCar(carId, recordData);
-        await this.selectClient(this.selectedClient.id);
-    } catch (err: any) {
-        runInAction(() => {
-            this.error = err.message || "Impossibile aggiungere il record di manutenzione.";
-        });
-        throw err;
+    unselectClient = () => {
+        this.selectedClient = null;
+        this.selectedCar = null;
     }
-  };
 
-  deleteMaintenanceRecord = async (recordId: string) => {
-      if (!this.selectedClient) return;
-      try {
-          await apiClient.deleteMaintenanceRecord(recordId);
-          await this.selectClient(this.selectedClient.id);
-      } catch (err: any) {
-          runInAction(() => {
-              this.error = err.message || "Impossibile eliminare il record di manutenzione.";
-          });
-          throw err;
-      }
-  };
-  
-  fetchDashboardStats = async () => {
-      this.isLoadingStats = true;
-      try {
-          const stats = await apiClient.getMechanicDashboardStats();
-          runInAction(() => {
-              this.dashboardStats = stats;
-          });
-      } catch (err: any) {
-          runInAction(() => {
-              this.error = err.message || "Impossibile caricare le statistiche.";
-          });
-      } finally {
-          runInAction(() => {
-              this.isLoadingStats = false;
-          });
-      }
-  }
-
-  fetchQuotes = async () => {
-    this.isLoadingQuotes = true;
-    try {
-      const quotes = await apiClient.getQuotes();
-      runInAction(() => {
-        this.quotes = quotes;
-      });
-    } catch (err: any) {
-      runInAction(() => {
-        this.error = err.message || "Impossibile caricare i preventivi.";
-      });
-    } finally {
-      runInAction(() => {
-        this.isLoadingQuotes = false;
-      });
+    addCarToClient = async (carData: Partial<Car>) => {
+        if (!this.selectedClient) throw new Error("No client selected");
+        this.error = null;
+        try {
+            await apiClient.addCarToClient(this.selectedClient.id, carData);
+            // Refresh client data to show the new car
+            await this.selectClient(this.selectedClient.id);
+        } catch (err: any) {
+            runInAction(() => {
+                this.error = err.message;
+            });
+            throw err;
+        }
     }
-  }
-
-  fetchInvoices = async () => {
-    this.isLoadingInvoices = true;
-    try {
-      const invoices = await apiClient.getInvoices();
-      runInAction(() => {
-        this.invoices = invoices;
-      });
-    } catch (err: any) {
-      runInAction(() => {
-        this.error = err.message || "Impossibile caricare le fatture.";
-      });
-    } finally {
-      runInAction(() => {
-        this.isLoadingInvoices = false;
-      });
+    
+    // Cars
+    selectCar = (car: Car) => {
+        this.selectedCar = car;
     }
-  }
-
-  // --- Inventory Actions ---
-  fetchInventory = async () => {
-    this.isLoadingInventory = true;
-    this.error = null;
-    try {
-        const items = await apiClient.getInventoryItems();
-        runInAction(() => {
-            this.inventory = items;
-        });
-    } catch (err: any) {
-        runInAction(() => {
-            this.error = err.message || "Impossibile caricare l'inventario.";
-        });
-    } finally {
-        runInAction(() => {
-            this.isLoadingInventory = false;
-        });
+    
+    unselectCar = () => {
+        this.selectedCar = null;
     }
-  };
+    
+    addMaintenanceRecord = async (carId: string, record: Omit<MaintenanceRecord, 'id'>) => {
+        if (!this.selectedCar || this.selectedCar.id !== carId) throw new Error("Car not selected or mismatch.");
+        this.error = null;
+        try {
+            const newRecord = await apiClient.addMaintenanceRecord(carId, record);
+             runInAction(() => {
+                if(this.selectedCar) {
+                    this.selectedCar.maintenance = [...(this.selectedCar.maintenance || []), newRecord];
+                }
+            });
+        } catch (err: any) {
+            runInAction(() => { this.error = err.message });
+            throw err;
+        }
+    }
+    
+    deleteMaintenanceRecord = async (recordId: string) => {
+        if (!this.selectedCar) throw new Error("Car not selected.");
+        this.error = null;
+        try {
+            await apiClient.deleteMaintenanceRecord(recordId);
+            runInAction(() => {
+                if(this.selectedCar) {
+                    this.selectedCar.maintenance = this.selectedCar.maintenance.filter(r => r.id !== recordId);
+                }
+            });
+        } catch (err: any) {
+            runInAction(() => { this.error = err.message });
+            throw err;
+        }
+    }
 
-  addInventoryItem = async (itemData: Omit<InventoryItem, 'id' | 'mechanicId'>) => {
-      await apiClient.createInventoryItem(itemData);
-      this.fetchInventory(); // Refresh list
-  };
+    // Quotes
+    fetchQuotes = async () => {
+        this.isLoadingQuotes = true;
+        this.error = null;
+        try {
+            const quotes = await apiClient.getQuotes();
+            runInAction(() => { this.quotes = quotes; });
+        } catch (err: any) {
+            runInAction(() => { this.error = err.message; });
+        } finally {
+            runInAction(() => { this.isLoadingQuotes = false; });
+        }
+    }
+    
+    // Invoices
+    fetchInvoices = async () => {
+        this.isLoadingInvoices = true;
+        this.error = null;
+        try {
+            const invoices = await apiClient.getInvoices();
+            runInAction(() => { this.invoices = invoices; });
+        } catch (err: any) {
+            runInAction(() => { this.error = err.message; });
+        } finally {
+            runInAction(() => { this.isLoadingInvoices = false; });
+        }
+    }
+    
+    // Inventory
+    fetchInventory = async () => {
+        this.isLoadingInventory = true;
+        this.error = null;
+        try {
+            const items = await apiClient.getInventory();
+            runInAction(() => { this.inventory = items; });
+        } catch (err: any) {
+            runInAction(() => { this.error = err.message; });
+        } finally {
+            runInAction(() => { this.isLoadingInventory = false; });
+        }
+    }
 
-  updateInventoryItem = async (itemId: number, itemData: Partial<InventoryItem>) => {
-      await apiClient.updateInventoryItem(itemId, itemData);
-      this.fetchInventory(); // Refresh list
-  };
+    addInventoryItem = async (itemData: Omit<InventoryItem, 'id' | 'mechanicId'>) => {
+        try {
+            const newItem = await apiClient.addInventoryItem(itemData);
+            runInAction(() => {
+                this.inventory.push(newItem);
+            });
+        } catch (err: any) {
+             runInAction(() => { this.error = err.message; });
+             throw err;
+        }
+    }
 
-  deleteInventoryItem = async (itemId: number) => {
-      await apiClient.deleteInventoryItem(itemId);
-      this.fetchInventory(); // Refresh list
-  };
+    updateInventoryItem = async (id: number, itemData: Partial<InventoryItem>) => {
+        try {
+            const updatedItem = await apiClient.updateInventoryItem(id, itemData);
+            runInAction(() => {
+                const index = this.inventory.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    this.inventory[index] = updatedItem;
+                }
+            });
+        } catch (err: any) {
+             runInAction(() => { this.error = err.message; });
+             throw err;
+        }
+    }
+
+    deleteInventoryItem = async (id: number) => {
+        try {
+            await apiClient.deleteInventoryItem(id);
+            runInAction(() => {
+                this.inventory = this.inventory.filter(i => i.id !== id);
+            });
+        } catch (err: any) {
+             runInAction(() => { this.error = err.message; });
+             throw err;
+        }
+    }
+    
+    // Stats
+    fetchDashboardStats = async () => {
+        this.isLoadingStats = true;
+        this.error = null;
+        try {
+            const stats = await apiClient.getDashboardStats();
+            runInAction(() => { this.dashboardStats = stats; });
+        } catch (err: any) {
+            runInAction(() => { this.error = err.message; });
+        } finally {
+            runInAction(() => { this.isLoadingStats = false; });
+        }
+    }
 }

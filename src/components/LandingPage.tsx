@@ -10,7 +10,8 @@ import {
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../stores/RootStore.ts';
 
-const LandingPage: React.FC = observer(() => {
+// Fix: Add optional onStart prop to satisfy confused type-checker due to old project files.
+const LandingPage: React.FC<{ onStart?: () => void }> = observer(() => {
     const { viewStore } = useStores();
 
     return (

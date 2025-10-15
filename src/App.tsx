@@ -48,7 +48,7 @@ const ThemedApp = observer(() => {
       case 'landing':
       default:
         // Fix: Pass an empty onStart prop to satisfy the type-checker, which seems to be confused by old project files.
-        return <LandingPage />;
+        return <LandingPage onStart={() => {}} />;
     }
   };
 

@@ -1,33 +1,18 @@
 import React, { useState } from 'react';
 import { Box, Button, Paper, Typography, Chip, Alert } from '@mui/material';
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add } from '@mui/icons-material';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../../stores/RootStore.ts';
-import { Invoice } from '../../types.ts';
 import CreateInvoiceModal from './CreateInvoiceModal.tsx';
+import { Invoice, Client } from '../../types.ts';
 
-
-const getStatusChip = (status: Invoice['status']) => {
-    const style = {
-        color: 'white',
-        bgcolor: 'grey.700'
-    };
-    switch (status) {
-        case 'sent':
-            style.bgcolor = 'info.main';
-            break;
-        case 'paid':
-            style.bgcolor = 'success.main';
-            break;
-        case 'overdue':
-            style.bgcolor = 'error.main';
-            break;
-        case 'cancelled':
-            style.bgcolor = 'warning.dark';
-            break;
-    }
-    return <Chip label={status} sx={style} size="small" />;
+const statusStyles: { [key: string]: { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' } } = {
+    draft: { label: 'Bozza', color: 'default' },
+    sent: { label: 'Inviata', color: 'info' },
+    paid: { label: 'Pagata', color: 'success' },
+    overdue: { label: 'Scaduta', color: 'warning' },
+    cancelled: { label: 'Annullata', color: 'error' }
 };
 
 
@@ -35,49 +20,58 @@ const InvoicesView: React.FC = observer(() => {
     const { mechanicStore } = useStores();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const columns: GridColDef[] = [
-        { field: 'invoiceNumber', headerName: 'Numero', width: 130 },
+    const handleInvoiceCreated = () => {
+        setIsModalOpen(false);
+        mechanicStore.fetchInvoices();
+        mechanicStore.fetchQuotes(); // Quotes might have been updated to 'invoiced'
+        mechanicStore.fetchDashboardStats();
+    };
+
+    const columns: GridColDef<Invoice>[] = [
+        { field: 'invoiceNumber', headerName: 'Numero', width: 150 },
         { 
             field: 'client', 
             headerName: 'Cliente', 
-            width: 200,
-            valueGetter: (params: GridValueGetterParams) => `${params.row.client?.firstName || ''} ${params.row.client?.lastName || ''}`
-        },
-        { 
-            field: 'car', 
-            headerName: 'Veicolo', 
-            width: 200,
-            valueGetter: (params: GridValueGetterParams) => `${params.row.car?.year || ''} ${params.row.car?.make || ''} ${params.row.car?.model || ''}`
+            flex: 1, 
+            minWidth: 150,
+            valueGetter: (params) => {
+                const client = params.value as Client;
+                if (!client) return '';
+                return `${client.firstName || ''} ${client.lastName || ''}`;
+            }
         },
         { 
             field: 'invoiceDate', 
             headerName: 'Data', 
-            width: 150,
-            valueGetter: (params: GridValueGetterParams) => new Date(params.row.invoiceDate).toLocaleDateString()
+            width: 120,
+            type: 'date',
+            valueGetter: (params) => params.value ? new Date(params.value) : null
         },
-        { field: 'totalAmount', headerName: 'Importo', width: 130, type: 'number',
-            valueGetter: (params: GridValueGetterParams) => `€${params.row.totalAmount.toFixed(2)}`
+        { 
+            field: 'totalAmount', 
+            headerName: 'Importo (€)', 
+            type: 'number', 
+            width: 130,
+            valueFormatter: ({ value }) => value != null ? `€${value.toFixed(2)}` : ''
         },
         {
             field: 'status',
             headerName: 'Stato',
-            width: 150,
-            renderCell: (params) => getStatusChip(params.value as Invoice['status']),
+            width: 120,
+            renderCell: (params) => {
+                const statusInfo = statusStyles[params.value] || { label: params.value, color: 'default' };
+                return <Chip label={statusInfo.label} color={statusInfo.color} size="small" />;
+            },
         },
+        // TODO: Add actions column
     ];
-
-    const onInvoiceCreated = () => {
-        setIsModalOpen(false);
-        mechanicStore.fetchInvoices();
-        mechanicStore.fetchDashboardStats();
-    };
-
+    
     return (
         <Paper variant="outlined">
-             <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">Tutte le Fatture</Typography>
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">Fatture</Typography>
                 <Button variant="contained" startIcon={<Add />} onClick={() => setIsModalOpen(true)}>
-                    Crea Fattura
+                    Nuova Fattura
                 </Button>
             </Box>
              {mechanicStore.error && <Alert severity="error" sx={{ mx: 2, mb: 2 }}>{mechanicStore.error}</Alert>}
@@ -88,6 +82,9 @@ const InvoicesView: React.FC = observer(() => {
                     loading={mechanicStore.isLoadingInvoices}
                     initialState={{
                         pagination: { paginationModel: { pageSize: 10 } },
+                        sorting: {
+                            sortModel: [{ field: 'invoiceDate', sort: 'desc' }],
+                        },
                     }}
                     pageSizeOptions={[10, 25, 50]}
                 />
@@ -96,7 +93,7 @@ const InvoicesView: React.FC = observer(() => {
             <CreateInvoiceModal
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onInvoiceCreated={onInvoiceCreated}
+                onInvoiceCreated={handleInvoiceCreated}
             />
         </Paper>
     );
