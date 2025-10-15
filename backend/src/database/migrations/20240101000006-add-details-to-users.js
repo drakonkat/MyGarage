@@ -14,17 +14,13 @@ export default {
       type: Sequelize.STRING,
       allowNull: true,
     });
-    await queryInterface.addColumn('Users', 'role', {
-      type: Sequelize.ENUM('personal', 'mechanic'),
-      allowNull: false,
-      defaultValue: 'personal'
-    });
+    // NOTA: La colonna 'role' è gestita dalla migrazione '...-add-role-to-users.js'
+    // per risolvere l'errore di colonna duplicata.
   },
 
   async down(queryInterface, Sequelize) {
     await queryInterface.removeColumn('Users', 'firstName');
     await queryInterface.removeColumn('Users', 'lastName');
     await queryInterface.removeColumn('Users', 'phone');
-    await queryInterface.removeColumn('Users', 'role');
   }
 };
