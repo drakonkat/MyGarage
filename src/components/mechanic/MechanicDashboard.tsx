@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Paper, Typography, Box, Avatar, useTheme } from '@mui/material';
+import { Paper, Typography, Box, Avatar, useTheme } from '@mui/material';
 import { People, EuroSymbol, RequestQuote, ReportProblem } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { observer } from 'mobx-react-lite';
@@ -30,23 +30,23 @@ const MechanicDashboard: React.FC = observer(() => {
     }));
     
     return (
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: -3, ml: -3 }}>
             {/* KPIs */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '50%', md: '25%' } }}>
                 <KPICard title="Clienti Attivi" value={dashboardStats.clientCount} icon={<People />} color="primary" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '50%', md: '25%' } }}>
                 <KPICard title="Fatturato Totale" value={`€${dashboardStats.totalRevenue.toFixed(2)}`} icon={<EuroSymbol />} color="success" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '50%', md: '25%' } }}>
                 <KPICard title="Preventivi in Attesa" value={dashboardStats.pendingQuotes} icon={<RequestQuote />} color="secondary" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            </Box>
+            <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '50%', md: '25%' } }}>
                 <KPICard title="Fatture Scadute" value={dashboardStats.overdueInvoices} icon={<ReportProblem />} color="error" />
-            </Grid>
+            </Box>
 
             {/* Chart */}
-            <Grid item xs={12}>
+            <Box sx={{ pt: 3, pl: 3, width: '100%' }}>
                  <Paper variant="outlined" sx={{ p: {xs: 2, md: 3} }}>
                      <Typography variant="h6" gutterBottom>
                         Andamento Fatturato (Anno Corrente)
@@ -70,8 +70,8 @@ const MechanicDashboard: React.FC = observer(() => {
                         </BarChart>
                     </ResponsiveContainer>
                  </Paper>
-            </Grid>
-        </Grid>
+            </Box>
+        </Box>
     );
 });
 

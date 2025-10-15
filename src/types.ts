@@ -183,3 +183,16 @@ export interface MechanicDashboardStats {
     overdueInvoices: number;
     monthlyRevenue: MonthlyRevenue[];
 }
+
+// Tipi per l'Inventario
+export interface InventoryItem {
+  id: number;
+  name: string;
+  description?: string;
+  sku?: string;
+  quantity: number;
+  costPrice: number;
+  sellingPrice?: number;
+  location?: string;
+  mechanicId: number;
+}

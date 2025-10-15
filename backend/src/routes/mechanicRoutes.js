@@ -18,16 +18,18 @@ router.post('/clients/:clientId/cars', mechanicController.createCarForClient);
 
 
 // --- Quote Management ---
-// Crea un nuovo preventivo per un cliente
 router.post('/quotes', mechanicController.createQuote);
-// Ottieni tutti i preventivi che hai creato
 router.get('/quotes', mechanicController.getQuotes);
 
 // --- Invoice Management ---
-// Crea una nuova fattura (magari da un preventivo)
 router.post('/invoices', mechanicController.createInvoice);
-// Ottieni tutte le fatture che hai creato
 router.get('/invoices', mechanicController.getInvoices);
+
+// --- Inventory Management ---
+router.get('/inventory', mechanicController.getInventory);
+router.post('/inventory', mechanicController.createInventoryItem);
+router.put('/inventory/:itemId', mechanicController.updateInventoryItem);
+router.delete('/inventory/:itemId', mechanicController.deleteInventoryItem);
 
 
 export default router;

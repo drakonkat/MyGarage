@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Button, Tabs, Tab, CircularProgress } from '@mui/material';
-import { PersonAdd, People, Assessment, Receipt, RequestQuote } from '@mui/icons-material';
+import { PersonAdd, People, Assessment, Receipt, RequestQuote, Inventory2 } from '@mui/icons-material';
 import { observer } from 'mobx-react-lite';
 import Header from '../Header.tsx';
 import { useStores } from '../../stores/RootStore.ts';
@@ -10,6 +10,7 @@ import ClientDetailView from './ClientDetailView.tsx';
 import MechanicDashboard from './MechanicDashboard.tsx';
 import QuotesView from './QuotesView.tsx';
 import InvoicesView from './InvoicesView.tsx';
+import InventoryView from './InventoryView.tsx';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -76,8 +77,6 @@ const MechanicApp: React.FC = observer(() => {
       return <ClientList />;
     }
 
-    const isLoading = mechanicStore.isLoadingClients || mechanicStore.isLoadingStats || mechanicStore.isLoadingQuotes || mechanicStore.isLoadingInvoices;
-
     return (
         <>
             <Header />
@@ -96,11 +95,12 @@ const MechanicApp: React.FC = observer(() => {
                 </Box>
                 
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <Tabs value={activeTab} onChange={handleTabChange} aria-label="mechanic dashboard tabs">
+                    <Tabs value={activeTab} onChange={handleTabChange} aria-label="mechanic dashboard tabs" variant="scrollable" scrollButtons="auto">
                         <Tab icon={<Assessment />} iconPosition="start" label="Dashboard" id="mechanic-tab-0" />
                         <Tab icon={<People />} iconPosition="start" label="Clienti" id="mechanic-tab-1" />
                         <Tab icon={<RequestQuote />} iconPosition="start" label="Preventivi" id="mechanic-tab-2" />
                         <Tab icon={<Receipt />} iconPosition="start" label="Fatture" id="mechanic-tab-3" />
+                        <Tab icon={<Inventory2 />} iconPosition="start" label="Inventario" id="mechanic-tab-4" />
                     </Tabs>
                 </Box>
                 
@@ -114,8 +114,11 @@ const MechanicApp: React.FC = observer(() => {
                 <TabPanel value={activeTab} index={2}>
                     <QuotesView />
                 </TabPanel>
-                    <TabPanel value={activeTab} index={3}>
+                <TabPanel value={activeTab} index={3}>
                     <InvoicesView />
+                </TabPanel>
+                 <TabPanel value={activeTab} index={4}>
+                    <InventoryView />
                 </TabPanel>
 
             </Container>

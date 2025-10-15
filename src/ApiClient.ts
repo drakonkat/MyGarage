@@ -10,7 +10,8 @@ import {
     Client,
     Quote,
     Invoice,
-    MechanicDashboardStats
+    MechanicDashboardStats,
+    InventoryItem
 } from './types.ts';
 
 // --- Gemini AI Setup ---
@@ -220,6 +221,31 @@ class ApiClient {
         return this.request('/mechanic/invoices', {
             method: 'POST',
             body: JSON.stringify(invoiceData),
+        });
+    }
+
+    // --- Inventory ---
+    async getInventoryItems(): Promise<InventoryItem[]> {
+        return this.request('/mechanic/inventory');
+    }
+
+    async createInventoryItem(itemData: Omit<InventoryItem, 'id' | 'mechanicId'>): Promise<InventoryItem> {
+        return this.request('/mechanic/inventory', {
+            method: 'POST',
+            body: JSON.stringify(itemData),
+        });
+    }
+
+    async updateInventoryItem(itemId: number, itemData: Partial<InventoryItem>): Promise<InventoryItem> {
+        return this.request(`/mechanic/inventory/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify(itemData),
+        });
+    }
+
+    async deleteInventoryItem(itemId: number): Promise<void> {
+        return this.request(`/mechanic/inventory/${itemId}`, {
+            method: 'DELETE',
         });
     }
 }

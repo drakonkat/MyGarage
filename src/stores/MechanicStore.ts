@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { RootStore } from './RootStore.ts';
 import { apiClient } from '../ApiClient.ts';
-import { Client, Quote, Invoice, MechanicDashboardStats, Car } from '../types.ts';
+import { Client, Quote, Invoice, MechanicDashboardStats, InventoryItem } from '../types.ts';
 
 const initialDashboardStats: MechanicDashboardStats = {
     clientCount: 0,
@@ -16,6 +16,7 @@ export class MechanicStore {
   clients: Client[] = [];
   quotes: Quote[] = [];
   invoices: Invoice[] = [];
+  inventory: InventoryItem[] = [];
   dashboardStats: MechanicDashboardStats = initialDashboardStats;
 
   selectedClient: Client | null = null;
@@ -24,6 +25,7 @@ export class MechanicStore {
   isLoadingClients: boolean = false;
   isLoadingQuotes: boolean = false;
   isLoadingInvoices: boolean = false;
+  isLoadingInventory: boolean = false;
   isLoadingStats: boolean = false;
   
   error: string | null = null;
@@ -39,6 +41,7 @@ export class MechanicStore {
       this.fetchQuotes();
       this.fetchInvoices();
       this.fetchDashboardStats();
+      this.fetchInventory();
   }
 
   fetchClients = async () => {
@@ -152,4 +155,39 @@ export class MechanicStore {
       });
     }
   }
+
+  // --- Inventory Actions ---
+  fetchInventory = async () => {
+    this.isLoadingInventory = true;
+    this.error = null;
+    try {
+        const items = await apiClient.getInventoryItems();
+        runInAction(() => {
+            this.inventory = items;
+        });
+    } catch (err: any) {
+        runInAction(() => {
+            this.error = err.message || "Impossibile caricare l'inventario.";
+        });
+    } finally {
+        runInAction(() => {
+            this.isLoadingInventory = false;
+        });
+    }
+  };
+
+  addInventoryItem = async (itemData: Omit<InventoryItem, 'id' | 'mechanicId'>) => {
+      await apiClient.createInventoryItem(itemData);
+      this.fetchInventory(); // Refresh list
+  };
+
+  updateInventoryItem = async (itemId: number, itemData: Partial<InventoryItem>) => {
+      await apiClient.updateInventoryItem(itemId, itemData);
+      this.fetchInventory(); // Refresh list
+  };
+
+  deleteInventoryItem = async (itemId: number) => {
+      await apiClient.deleteInventoryItem(itemId);
+      this.fetchInventory(); // Refresh list
+  };
 }

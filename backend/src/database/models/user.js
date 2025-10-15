@@ -24,6 +24,12 @@ export default (sequelize, DataTypes) => {
           foreignKey: 'userId',
           as: 'clientProfile'
       });
+
+      // Un meccanico ha molti articoli in inventario
+      User.hasMany(models.InventoryItem, {
+        foreignKey: 'mechanicId',
+        as: 'inventoryItems'
+      });
     }
   }
   User.init({

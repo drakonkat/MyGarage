@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, CardActions, Button, Box, Paper, List, ListItem, ListItemIcon, Avatar, ListItemText, Grid, Chip } from '@mui/material';
+import { Card, CardContent, Typography, CardActions, Button, Box, Paper, List, ListItem, ListItemIcon, Avatar, ListItemText, Chip } from '@mui/material';
 import { EventNote, Build, DirectionsCar, ErrorOutline, EuroSymbol } from '@mui/icons-material';
 import { Car } from '../types.ts';
 import DashboardCharts from './DashboardCharts.tsx';
@@ -59,20 +59,20 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Grid container spacing={3}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', mt: -3, ml: -3 }}>
                 {/* KPIs */}
-                <Grid item xs={12} sm={6} md={4}>
+                <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '50%', md: '33.333%' } }}>
                     <KPICard title="Auto nel Garage" value={cars.length} icon={<DirectionsCar />} />
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
+                </Box>
+                <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '50%', md: '33.333%' } }}>
                     <KPICard title="Costo Totale Manutenzione" value={`€${totalCost.toFixed(2)}`} icon={<EuroSymbol />} color="success"/>
-                </Grid>
-                <Grid item xs={12} sm={12} md={4}>
+                </Box>
+                <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', sm: '100%', md: '33.333%' } }}>
                     <KPICard title="Problemi Aperti" value={openIssues} icon={<ErrorOutline />} color={openIssues > 0 ? 'error' : 'info'} />
-                </Grid>
+                </Box>
                 
                 {/* Main content grid */}
-                <Grid item xs={12} lg={5}>
+                <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', lg: '41.666%' } }}>
                      <Paper elevation={0} variant="outlined" sx={{ p: {xs: 2, md: 3}, height: '100%' }}>
                         <Typography variant="h5" gutterBottom>
                             Prossime Scadenze
@@ -103,9 +103,9 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
                              </Box>
                          )}
                      </Paper>
-                </Grid>
+                </Box>
                 
-                <Grid item xs={12} lg={7}>
+                <Box sx={{ pt: 3, pl: 3, width: { xs: '100%', lg: '58.333%' } }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {cars.map((car) => {
                             const latestMileage = car.maintenance.length > 0 ? Math.max(...car.maintenance.map(m => m.mileage)) : 'N/D';
@@ -147,14 +147,14 @@ const Dashboard: React.FC<DashboardProps> = ({ cars, onCarSelect, onDeleteCar })
                             )
                         })}
                     </Box>
-                </Grid>
+                </Box>
 
                  {hasMaintenanceData && (
-                     <Grid item xs={12}>
+                     <Box sx={{ pt: 3, pl: 3, width: '100%' }}>
                         <DashboardCharts cars={cars} />
-                     </Grid>
+                     </Box>
                  )}
-            </Grid>
+            </Box>
         </Box>
     );
 };

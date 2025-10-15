@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Op, fn, col } from 'sequelize';
 import db from '../database/models/index.js';
-const { User, Quote, Invoice, Car, Client, MaintenanceRecord } = db;
+const { User, Quote, Invoice, Car, Client, MaintenanceRecord, InventoryItem } = db;
 
 // Funzione di utilità per generare numeri sequenziali
 async function generateNextNumber(model, field, prefix) {
@@ -332,6 +332,80 @@ const mechanicController = {
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Errore nel recupero delle fatture." });
+        }
+    },
+
+    // --- Inventory Management ---
+    getInventory: async (req, res) => {
+        const mechanicId = req.user.id;
+        try {
+            const items = await InventoryItem.findAll({
+                where: { mechanicId },
+                order: [['name', 'ASC']]
+            });
+            res.status(200).json(items);
+        } catch (error) {
+            console.error('Error fetching inventory:', error);
+            res.status(500).json({ message: 'Errore nel recupero dell\'inventario.' });
+        }
+    },
+
+    createInventoryItem: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { name, description, sku, quantity, costPrice, sellingPrice, location } = req.body;
+
+        if (!name || costPrice === undefined) {
+            return res.status(400).json({ message: 'Nome e costo sono obbligatori.' });
+        }
+
+        try {
+            const newItem = await InventoryItem.create({
+                name, description, sku,
+                quantity: quantity || 0,
+                costPrice, sellingPrice, location,
+                mechanicId
+            });
+            res.status(201).json(newItem);
+        } catch (error) {
+            console.error('Error creating inventory item:', error);
+            res.status(500).json({ message: 'Errore nella creazione dell\'articolo.' });
+        }
+    },
+    
+    updateInventoryItem: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { itemId } = req.params;
+        const { name, description, sku, quantity, costPrice, sellingPrice, location } = req.body;
+
+        try {
+            const item = await InventoryItem.findOne({ where: { id: itemId, mechanicId } });
+            if (!item) {
+                return res.status(404).json({ message: 'Articolo non trovato.' });
+            }
+
+            await item.update({ name, description, sku, quantity, costPrice, sellingPrice, location });
+            res.status(200).json(item);
+        } catch (error) {
+            console.error('Error updating inventory item:', error);
+            res.status(500).json({ message: 'Errore nell\'aggiornamento dell\'articolo.' });
+        }
+    },
+
+    deleteInventoryItem: async (req, res) => {
+        const mechanicId = req.user.id;
+        const { itemId } = req.params;
+
+        try {
+            const item = await InventoryItem.findOne({ where: { id: itemId, mechanicId } });
+            if (!item) {
+                return res.status(404).json({ message: 'Articolo non trovato.' });
+            }
+
+            await item.destroy();
+            res.status(204).send();
+        } catch (error) {
+            console.error('Error deleting inventory item:', error);
+            res.status(500).json({ message: 'Errore nell\'eliminazione dell\'articolo.' });
         }
     }
 };
