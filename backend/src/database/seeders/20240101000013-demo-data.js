@@ -9,9 +9,11 @@ export default {
     try {
       // 1. Crea Utente Meccanico e Utente Cliente
       const hashedPassword = bcrypt.hashSync('password', 10);
-      const users = await queryInterface.bulkInsert('Users', [
+      const userEmails = ['admin@mygarage.com', 'mario.rossi@email.com'];
+      
+      await queryInterface.bulkInsert('Users', [
         {
-          email: 'admin@mygarage.com',
+          email: userEmails[0],
           password: hashedPassword,
           role: 'mechanic',
           firstName: 'Admin',
@@ -21,7 +23,7 @@ export default {
           updatedAt: new Date(),
         },
         {
-          email: 'mario.rossi@email.com',
+          email: userEmails[1],
           password: hashedPassword,
           role: 'personal',
           firstName: 'Mario',
@@ -30,17 +32,28 @@ export default {
           createdAt: new Date(),
           updatedAt: new Date(),
         }
-      ], { returning: ['id', 'email'], transaction });
+      ], { transaction });
+
+      // Recupera gli utenti appena inseriti per ottenere i loro ID, poiché bulkInsert non li restituisce in modo affidabile su tutti i DB
+      const users = await queryInterface.sequelize.query(
+        `SELECT id, email FROM Users WHERE email IN (:userEmails)`,
+        {
+          replacements: { userEmails },
+          type: Sequelize.QueryTypes.SELECT,
+          transaction
+        }
+      );
 
       const mechanicId = users.find(u => u.email === 'admin@mygarage.com').id;
       const userClientId = users.find(u => u.email === 'mario.rossi@email.com').id;
 
       // 2. Crea Clienti (uno con account, uno senza)
-      const clients = await queryInterface.bulkInsert('Clients', [
+      const clientEmails = ['mario.rossi@email.com', 'laura.bianchi@email.com'];
+      await queryInterface.bulkInsert('Clients', [
         {
           firstName: 'Mario',
           lastName: 'Rossi',
-          email: 'mario.rossi@email.com',
+          email: clientEmails[0],
           phone: '0987654321',
           mechanicId: mechanicId,
           userId: userClientId, // Cliente con account
@@ -50,17 +63,28 @@ export default {
         {
           firstName: 'Laura',
           lastName: 'Bianchi',
-          email: 'laura.bianchi@email.com',
+          email: clientEmails[1],
           phone: '1122334455',
           mechanicId: mechanicId,
           userId: null, // Cliente senza account
           createdAt: new Date(),
           updatedAt: new Date(),
         },
-      ], { returning: ['id', 'email'], transaction });
+      ], { transaction });
+
+      // Recupera i clienti appena inseriti
+      const clients = await queryInterface.sequelize.query(
+         `SELECT id, email FROM Clients WHERE email IN (:clientEmails)`,
+         {
+           replacements: { clientEmails },
+           type: Sequelize.QueryTypes.SELECT,
+           transaction
+         }
+      );
 
       const clientWithAccountId = clients.find(c => c.email === 'mario.rossi@email.com').id;
       const clientWithoutAccountId = clients.find(c => c.email === 'laura.bianchi@email.com').id;
+
 
       // 3. Crea Auto per i clienti
       const carId1 = uuidv4();
@@ -126,10 +150,17 @@ export default {
   },
 
   async down(queryInterface, Sequelize) {
-    // Rimuovi in ordine inverso per rispettare le foreign key
-    await queryInterface.bulkDelete('MaintenanceRecords', null, {});
-    await queryInterface.bulkDelete('Cars', null, {});
-    await queryInterface.bulkDelete('Clients', null, {});
-    await queryInterface.bulkDelete('Users', null, {});
+     const transaction = await queryInterface.sequelize.transaction();
+    try {
+        // Rimuovi in ordine inverso per rispettare le foreign key
+        await queryInterface.bulkDelete('MaintenanceRecords', null, { transaction });
+        await queryInterface.bulkDelete('Cars', null, { transaction });
+        await queryInterface.bulkDelete('Clients', null, { transaction });
+        await queryInterface.bulkDelete('Users', null, { transaction });
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
   }
 };
