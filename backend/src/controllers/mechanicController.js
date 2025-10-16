@@ -210,8 +210,18 @@ const mechanicController = {
         const quotes = await Quote.findAll({
             where: { mechanicId: req.user.id },
             include: [
-              { model: Client, as: 'client' },
-              { model: Car, as: 'car' }
+              { 
+                model: Client, 
+                as: 'client',
+                attributes: ['id', 'firstName', 'lastName'],
+                required: false,
+              },
+              { 
+                model: Car, 
+                as: 'car',
+                attributes: ['id', 'make', 'model', 'year', 'licensePlate'],
+                required: false,
+              }
             ],
             order: [['quoteDate', 'DESC']]
         });
@@ -236,8 +246,18 @@ const mechanicController = {
         const invoices = await Invoice.findAll({
             where: { mechanicId: req.user.id },
             include: [
-              { model: Client, as: 'client' },
-              { model: Car, as: 'car' }
+              { 
+                model: Client, 
+                as: 'client',
+                attributes: ['id', 'firstName', 'lastName'],
+                required: false,
+              },
+              { 
+                model: Car, 
+                as: 'car',
+                attributes: ['id', 'make', 'model', 'year', 'licensePlate'],
+                required: false,
+              }
             ],
             order: [['invoiceDate', 'DESC']]
         });
