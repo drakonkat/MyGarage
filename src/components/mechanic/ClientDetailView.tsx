@@ -27,8 +27,8 @@ const ClientDetailView: React.FC = observer(() => {
             
             <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
                 <Typography variant="h5" gutterBottom>{client.firstName} {client.lastName}</Typography>
-                <Typography color="text.secondary">Email: {client.email || 'N/D'}</Typography>
-                <Typography color="text.secondary">Telefono: {client.phone || 'N/D'}</Typography>
+                <Typography color="text.secondary">Email: {client.email || '-'}</Typography>
+                <Typography color="text.secondary">Telefono: {client.phone || '-'}</Typography>
             </Paper>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', my: 3 }}>

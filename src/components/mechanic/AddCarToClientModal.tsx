@@ -139,7 +139,8 @@ const AddCarToClientModal: React.FC<AddCarToClientModalProps> = observer(({ open
         const carData = {
             make: isManual ? manualMake : selectedMake!.name,
             model: isManual ? manualModel : `${selectedModel!.name} ${selectedVehicle!.name}`,
-            year: selectedYear,
+            // Fix: Converted the 'year' property from a string to a number using parseInt to match the `Partial<Car>` type definition.
+            year: parseInt(selectedYear, 10),
             mileage: currentMileage,
             licensePlate,
         };

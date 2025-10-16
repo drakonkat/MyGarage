@@ -121,7 +121,7 @@ const CreateQuoteModal: React.FC<CreateQuoteModalProps> = observer(({ open, onCl
                     />
                      <Autocomplete
                         options={availableCars}
-                        getOptionLabel={(option) => `${option.year} ${option.make} ${option.model} (${option.licensePlate || 'N/D'})`}
+                        getOptionLabel={(option) => `${option.year} ${option.make} ${option.model} (${option.licensePlate || '-'})`}
                         value={selectedCar}
                         onChange={(e, newValue) => setSelectedCar(newValue)}
                         disabled={!selectedClient}

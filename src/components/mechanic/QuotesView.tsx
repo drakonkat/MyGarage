@@ -28,25 +28,23 @@ const QuotesView: React.FC = observer(() => {
     const columns: GridColDef<Quote>[] = [
         { field: 'quoteNumber', headerName: 'Numero', width: 150 },
         { 
-            field: 'client', 
+            field: 'clientName', 
             headerName: 'Cliente', 
             flex: 1, 
             minWidth: 150,
             valueGetter: (params) => {
-                const client = params.value as Client;
-                if (!client) return '';
-                return `${client.firstName || ''} ${client.lastName || ''}`;
+                const client = params?.row?.client;
+                return client ? `${client.firstName} ${client.lastName}` : '-';
             }
         },
         { 
-            field: 'car', 
+            field: 'carDescription', 
             headerName: 'Veicolo', 
             flex: 1, 
             minWidth: 150,
             valueGetter: (params) => {
-                const car = params.value as Car;
-                if (!car) return '';
-                return `${car.make || ''} ${car.model || ''}`;
+                const car = params?.row?.car;
+                return car ? `${car.year} ${car.make} ${car.model}` : '-';
             }
         },
         { 
@@ -67,6 +65,8 @@ const QuotesView: React.FC = observer(() => {
             field: 'status',
             headerName: 'Stato',
             width: 120,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => {
                 const statusInfo = statusStyles[params.value] || { label: params.value, color: 'default' };
                 return <Chip label={statusInfo.label} color={statusInfo.color} size="small" />;
@@ -77,6 +77,8 @@ const QuotesView: React.FC = observer(() => {
             type: 'actions',
             headerName: 'Azioni',
             width: 100,
+            align: 'center',
+            headerAlign: 'center',
             cellClassName: 'actions',
             getActions: (/*{ id }*/) => {
                 return [

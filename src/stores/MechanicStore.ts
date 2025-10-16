@@ -154,8 +154,10 @@ export class MechanicStore {
         this.error = null;
         try {
             const quotes = await apiClient.getQuotes();
+            console.log("Fetched quotes from API:", quotes);
             runInAction(() => { this.quotes = quotes; });
         } catch (err: any) {
+            console.error("Error fetching quotes:", err);
             runInAction(() => { this.error = err.message; });
         } finally {
             runInAction(() => { this.isLoadingQuotes = false; });
@@ -168,8 +170,10 @@ export class MechanicStore {
         this.error = null;
         try {
             const invoices = await apiClient.getInvoices();
+            console.log("Fetched invoices from API:", invoices);
             runInAction(() => { this.invoices = invoices; });
         } catch (err: any) {
+            console.error("Error fetching invoices:", err);
             runInAction(() => { this.error = err.message; });
         } finally {
             runInAction(() => { this.isLoadingInvoices = false; });

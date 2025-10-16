@@ -5,7 +5,7 @@ import { Add } from '@mui/icons-material';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '../../stores/RootStore.ts';
 import CreateInvoiceModal from './CreateInvoiceModal.tsx';
-import { Invoice, Client } from '../../types.ts';
+import { Invoice, Client, Car } from '../../types.ts';
 
 const statusStyles: { [key: string]: { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' } } = {
     draft: { label: 'Bozza', color: 'default' },
@@ -30,14 +30,23 @@ const InvoicesView: React.FC = observer(() => {
     const columns: GridColDef<Invoice>[] = [
         { field: 'invoiceNumber', headerName: 'Numero', width: 150 },
         { 
-            field: 'client', 
+            field: 'clientName', 
             headerName: 'Cliente', 
             flex: 1, 
             minWidth: 150,
             valueGetter: (params) => {
-                const client = params.value as Client;
-                if (!client) return '';
-                return `${client.firstName || ''} ${client.lastName || ''}`;
+                const client = params?.row?.client;
+                return client ? `${client.firstName} ${client.lastName}` : '-';
+            }
+        },
+        { 
+            field: 'carDescription', 
+            headerName: 'Veicolo', 
+            flex: 1, 
+            minWidth: 150,
+            valueGetter: (params) => {
+                const car = params?.row?.car;
+                return car ? `${car.year} ${car.make} ${car.model}` : '-';
             }
         },
         { 
@@ -58,6 +67,8 @@ const InvoicesView: React.FC = observer(() => {
             field: 'status',
             headerName: 'Stato',
             width: 120,
+            align: 'center',
+            headerAlign: 'center',
             renderCell: (params) => {
                 const statusInfo = statusStyles[params.value] || { label: params.value, color: 'default' };
                 return <Chip label={statusInfo.label} color={statusInfo.color} size="small" />;

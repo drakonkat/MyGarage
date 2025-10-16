@@ -209,7 +209,10 @@ const mechanicController = {
     try {
         const quotes = await Quote.findAll({
             where: { mechanicId: req.user.id },
-            include: ['client', 'car'],
+            include: [
+              { model: Client, as: 'client' },
+              { model: Car, as: 'car' }
+            ],
             order: [['quoteDate', 'DESC']]
         });
         res.status(200).json(quotes);
@@ -232,7 +235,10 @@ const mechanicController = {
     try {
         const invoices = await Invoice.findAll({
             where: { mechanicId: req.user.id },
-            include: ['client', 'car'],
+            include: [
+              { model: Client, as: 'client' },
+              { model: Car, as: 'car' }
+            ],
             order: [['invoiceDate', 'DESC']]
         });
         res.status(200).json(invoices);

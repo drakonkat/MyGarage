@@ -54,7 +54,7 @@ const InventoryView: React.FC = observer(() => {
             headerName: 'Prezzo Vend. (€)', 
             type: 'number', 
             width: 150,
-            valueFormatter: ({ value }) => value ? `€${value.toFixed(2)}` : 'N/D'
+            valueFormatter: ({ value }) => value ? `€${value.toFixed(2)}` : '-'
         },
         { field: 'location', headerName: 'Posizione', flex: 1, minWidth: 120 },
         {

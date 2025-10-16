@@ -30,10 +30,10 @@ const ClientList: React.FC = observer(() => {
                             secondary={
                                 <Box component="span" sx={{ display: 'flex', flexDirection: {xs: 'column', sm: 'row'}, gap: {xs: 0, sm: 2} }}>
                                     <Typography component="span" variant="body2" color="text.secondary">
-                                        {client.email || 'Nessuna email'}
+                                        Email: {client.email || '-'}
                                     </Typography>
                                      <Typography component="span" variant="body2" color="text.secondary">
-                                        {client.phone || 'Nessun telefono'}
+                                        Tel: {client.phone || '-'}
                                     </Typography>
                                 </Box>
                             }
